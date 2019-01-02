@@ -23,4 +23,5 @@
 *   11. Reverb
 *   12. Loopstation
 *   13. Tone controls OPFilter.setLowpass(0,400,.7); etc
+* There may a be a problem with the moving average filter
  */
