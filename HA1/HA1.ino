@@ -1,9 +1,14 @@
 /*  Created by Peter Williams 19/06/2018
  *   Added Comment - testing commit 2
  *   
- *   NEW TONE CONTROL
- *   
- *   nECK AND bRIJ ARE SWAPPED    
+ *  Track pitch for synthesis   
+ *  MixOut lost in IDE
+ *  PUBlend set to even
+ *  All processing delteted
+ *  
+ *  
+ *  
+ *  
 Neck encoder:
 29,28, A16
 Middle encoder:
@@ -13,37 +18,6 @@ Bridge encoder:
 LED:
 30 - 32
 */
-
-/*Remember to adjust coefficients for storing values
-click states on neck encoder
-Also working on tone control */
-
-/* ############### TO DO ############################
- *  1. Add global variables so that parameters can be used directly in effects
- *  1. b) add fade in   ########## FAILED  ##############
- *  2. Add audio board, ip,op
- *  3. Choose effects
- *  4. Test Effects
- *  5. Add neck control
- *  6. Add wiring colors
- *  
- *  Effects possibilities:
- *  1. Distortion
- *  2. Compression
- *  3. Chorus
- *  4. Octaver
- *  5. Bass Balls
- *  7. Sample Trigger 
- *      a. auto accomp drums
- *      b. single note trigger
- *      c. Drum loop
-*   8. Convolution
-*   9. Sytnh
-*   10. Delay
-*   11. Reverb
-*   12. Loopstation
-*   13. Tone controls OPFilter.setLowpass(0,400,.7); etc
- */
 
 #include <Encoder.h>  // encoders library
 #include "OneButton.h"  // Library for double, single and long press clicks, only works with one instance
@@ -56,42 +30,19 @@ Also working on tone control */
 #include <SD.h>
 #include <SerialFlash.h>
 
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
-
 // GUItool: begin automatically generated code
 AudioInputI2S            i2s1;           //xy=193,166
-AudioMixer4              PUBlend;        //xy=342,179
-AudioFilterBiquad        PreProcFilter2; //xy=417,689
-AudioFilterStateVariable filter1;        //xy=475.0001220703125,185.00003814697266
-AudioFilterBiquad        PreProcFilter;  //xy=493,633
-AudioEffectDelay         chBlock;        //xy=579,739
-AudioFilterBiquad        sweep;        //xy=652.0005531311035,328.20008087158203
-// AudioEffectGranular      granular1;      //xy=656,633
-AudioFilterStateVariable filter3;        //xy=658.0002975463867,269.00010681152344
-AudioFilterStateVariable filter2;        //xy=659.0002975463867,215.00010681152344
-AudioMixer4              chMix;          //xy=718,712
-AudioMixer4              filterMix;         //xy=838.0001602172852,159.00005531311035
-AudioMixer4              MixOut;         //xy=1111.000316619873,153.0000457763672
-AudioOutputI2S           i2s2;           //xy=1231.0003242492676,244.0000467300415
+AudioAnalyzeNoteFrequency freq1;          //xy=278,422
+AudioMixer4              PUBlend;        //xy=344.00000762939453,181.00000381469727
+AudioOutputI2S           i2s2;           //xy=491.00003814697266,186.00000667572021
 AudioConnection          patchCord1(i2s1, 0, PUBlend, 0);
-AudioConnection          patchCord2(i2s1, 1, PUBlend, 1);
-AudioConnection          patchCord3(PUBlend, 0, filter1, 0);
-AudioConnection          patchCord4(PreProcFilter2, chBlock);
-AudioConnection          patchCord5(filter1, 2, filter2, 0);
-AudioConnection          patchCord6(filter1, 2, filter3, 0);
-AudioConnection          patchCord7(filter1, 2, filterMix, 0);
-AudioConnection          patchCord8(filter1, 2, sweep, 0);
-// AudioConnection          patchCord9(PreProcFilter, granular1);
-AudioConnection          patchCord10(sweep, 0, filterMix, 3);
-AudioConnection          patchCord11(filter3, 2, filterMix, 2);
-AudioConnection          patchCord12(filter2, 1, filterMix, 1);
-AudioConnection          patchCord13(filterMix, 0, i2s2, 0);
+AudioConnection          patchCord2(i2s1, 0, freq1, 0);
+AudioConnection          patchCord3(i2s1, 1, PUBlend, 1);
+AudioConnection          patchCord4(PUBlend, 0, i2s2, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=205,115
 // GUItool: end automatically generated code
+
+
 
 #define GRANULAR_MEMORY_SIZE 12800*2  // enough for 290 ms at 44.1 kHz
 int16_t granularMemory[GRANULAR_MEMORY_SIZE];
@@ -174,6 +125,7 @@ void setup() {
   Serial.begin(9600);
   
   
+  
 } // setup
 // starting encoder values
 // ########## MAKE SURE THESE MATCH STARTING VALUES  
@@ -199,6 +151,14 @@ int level = 1;
 
 // main code here, to run repeatedly: 
 void loop() {
+// Dynamic and tone
+freq1.begin(0.1);
+
+    if (freq1.available()) {
+        float note = freq1.read();
+        float prob = freq1.probability();
+        Serial.print(note, prob);
+    }
 
   // ###### FSRS ################ //
   fsr1 = analogRead(fsr1Pin);
@@ -210,65 +170,39 @@ void loop() {
 //  Serial.print(fsr2);
 //  Serial.print(" ### "); 
 
-  // ###### PROCESSING  ############  //
-float hpr = 0.5+Neck*0.01667;  // High pass increases resonance with neck 1
-float lbg = Neck/200; // Bass boost increases with Neck 1
-float lbf = 100-Neck/5; // Bass boost center deceases with increasing neck 1
-float lbq = 0.707+Neck*0.02; // bass boost narrows with increasing neck 1
-float lpf = 20000-Neck*40; // High roll off increases with neck 1
-float lpq = 2-Neck*0.0075; // Slope of low pass decreases with increasing neck 1
+float pub1 = 0.5;
+float pub2 = 0.5;
 
-// Neck 2
-float sg = constrain(Neck2*0.08,0,4); // As Neck 2 increases high mid gain increases. A max of 4 db at 50
-float nf = 800-constrain((Neck2-50)*12,0,600); // center freq decreases from 800 to 200 troughing at 100
-float nq = 2- constrain((Neck2-50)*0.02,0,1.5); // 
-
-// Neck 3
-float pub1 = Mid/80;
-float pub2 = Mid2/100;
 PUBlend.gain(0,pub2);
 PUBlend.gain(1,pub1);
 
-filter1.frequency(35);
-filter1.resonance(hpr);
-filter2.frequency(lbf);
-filter2.resonance(lbq);
-filter3.frequency(lpf);
-filter3.resonance(lpq);
-
-sweep.setBandpass(0,1100,2);
-sweep.setNotch(1,nf,nq);
 //sweep.setNotch(2,800,2);
 //sweep.setNotch(3,800,2);
 
 
-filterMix.gain(0,0.5-lbg);
-filterMix.gain(1,lbg);
-filterMix.gain(2,lbg);
-filterMix.gain(3,sg);
 
 
-MixOut.gain(0,1);
+// MixOut.gain(0,1);
 
 
   // Set parameters
  
 
 // #### debug #####
-Serial.print(String(Neck)+",");
-Serial.print(String(Mid2)+",");
-Serial.print(String(Mid)+",");
-Serial.print(String(hpr)+",");
-Serial.print(String(lbf)+",");
-Serial.print(String(lbq)+",");
-Serial.print(String(lpf)+",");
-Serial.print(String(lpq)+",");
-Serial.print(String(lbg)+",");
-Serial.print(String(sg)+",");
-//Serial.print(String(Neck3)+",");
-Serial.print(String(Mid)+",");
-Serial.print(String(nf)+",");
-Serial.print(String(nq)+",");
+//Serial.print(String(Neck)+",");
+//Serial.print(String(Mid2)+",");
+//Serial.print(String(Mid)+",");
+//Serial.print(String(hpr)+",");
+//Serial.print(String(lbf)+",");
+//Serial.print(String(lbq)+",");
+//Serial.print(String(lpf)+",");
+//Serial.print(String(lpq)+",");
+//Serial.print(String(lbg)+",");
+//Serial.print(String(sg)+",");
+////Serial.print(String(Neck3)+",");
+//Serial.print(String(Mid)+",");
+//Serial.print(String(nf)+",");
+//Serial.print(String(nq)+",");
 //Serial.print(String(Mid2)+",");
 //Serial.print(String(Brij)+",");
 //Serial.print(String(Brij2)+",");

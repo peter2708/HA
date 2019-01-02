@@ -1,0 +1,26 @@
+/* ############### TO DO ############################
+ *  1. Add global variables so that parameters can be used directly in effects
+ *  1. b) add fade in   ########## FAILED  ##############
+ *  2. Add audio board, ip,op
+ *  3. Choose effects
+ *  4. Test Effects
+ *  5. Add neck control
+ *  6. Add wiring colors
+ *  
+ *  Effects possibilities:
+ *  1. Distortion
+ *  2. Compression
+ *  3. Chorus
+ *  4. Octaver
+ *  5. Bass Balls
+ *  7. Sample Trigger 
+ *      a. auto accomp drums
+ *      b. single note trigger
+ *      c. Drum loop
+*   8. Convolution
+*   9. Sytnh
+*   10. Delay
+*   11. Reverb
+*   12. Loopstation
+*   13. Tone controls OPFilter.setLowpass(0,400,.7); etc
+ */
