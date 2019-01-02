@@ -1,2 +1,4 @@
 # Files to ignore here
 ignore.txt
+# /any folder
+# *.specific extensions
