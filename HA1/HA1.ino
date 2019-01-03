@@ -117,8 +117,8 @@ Serial.print(String(Neck)+",");
 Serial.print(String(Neck2)+",");
 
 Serial.print(String(fsr)+",");
-
-float avg = avgFSR.reading(fsr);  
+int avg = avgFSR.reading(fsr);  
+Serial.print(String(avg)+",");
 
 Serial.println("");
 
