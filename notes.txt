@@ -1,4 +1,10 @@
-/* ############### TO DO ############################
+/* 
+* ############### Done #######################
+* Gunk Stripped out
+* Sensors cleaned up and working
+* Neck smoothed
+* Ready to add simple tone and pan
+* ############### TO DO ############################
  *  1. Add global variables so that parameters can be used directly in effects
  *  1. b) add fade in   ########## FAILED  ##############
  *  2. Add audio board, ip,op
