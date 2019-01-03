@@ -1,5 +1,6 @@
 /*  Created by Peter Williams 19/06/2018
  *   All sensors tested
+ *   Pick-up Balance added, but not checked
  *   Now adding simple tone and panning filters
  *  
 Bridge encoder:
@@ -176,21 +177,24 @@ void loop() {
   fsr1 = analogRead(fsr1Pin);
   fsr2 = analogRead(fsr2Pin);
   fsr = fsr1-fsr2;
-  
+  int avg = avgFSR.reading(fsr);
 // Set parameters
- 
+float pu1g = .5+Mid/100;
+float pu2g = 1-pu1g;
+PUBlend.gain(0,pu1g);
+PUBlend.gain(2,pu2g); 
 
 // #### debug #####  TO BE COMMENTED OUT IN GIGIING VERSION
-Serial.print(String(Bridge)+",");
-Serial.print(String(Bridge2)+",");
-Serial.print(String(Bridge3)+",");
-Serial.print(String(Mid)+",");
-Serial.print(String(Mid2)+",");
-Serial.print(String(Neck)+",");
-Serial.print(String(Neck2)+",");
-Serial.print(String(fsr)+",");
-Serial.print(String(avg)+",");
-
+//Serial.print(String(Bridge)+",");
+//Serial.print(String(Bridge2)+",");
+//Serial.print(String(Bridge3)+",");
+//Serial.print(String(Mid)+",");
+//Serial.print(String(Mid2)+",");
+//Serial.print(String(Neck)+",");
+//Serial.print(String(Neck2)+",");
+//Serial.print(String(fsr)+",");
+//Serial.print(String(avg)+",");
+Serial.print("Pick up 1 Gain: "+String(pu1g)+"   Pick up 2 gain: "+String(pu2g));
 Serial.println("");
 
 // read encoder settings
