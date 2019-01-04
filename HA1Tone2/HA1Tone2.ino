@@ -1,7 +1,6 @@
 /*  Created by Peter Williams 19/06/2018
  *   All sensors tested
- *   Pick-up Balance added, but not checked
- *   Now adding simple tone and panning filters
+ *   Compression needs to be worked into tone
  *  
 Bridge encoder:
 29,28, A16
@@ -29,16 +28,22 @@ LED:
 
 // GUItool: begin automatically generated code
 AudioInputI2S            i2s1;           //xy=193,166
-AudioMixer4              PUBlend;        //xy=342,179
-AudioFilterStateVariable Pass_1;        //xy=479.0000534057617,212.0001220703125
-AudioMixer4              mixer1;         //xy=631.0000305175781,179.0000114440918
+AudioMixer4              PUBlend;        //xy=461.00001525878906,212.00000762939453
+AudioFilterBiquad        Cuts;        //xy=731.0002288818359,344.00014781951904
+AudioFilterStateVariable midPass;        //xy=741.000072479248,286.00003242492676
+AudioFilterStateVariable bassPass;        //xy=749.000072479248,228.00003051757812
+AudioMixer4              mixer1;         //xy=922.000358581543,218.00009155273438
 AudioOutputI2S           i2s2;           //xy=1231.0003242492676,244.0000467300415
 AudioConnection          patchCord1(i2s1, 0, PUBlend, 0);
 AudioConnection          patchCord2(i2s1, 1, PUBlend, 1);
-AudioConnection          patchCord3(PUBlend, 0, Pass_1, 0);
-AudioConnection          patchCord4(PUBlend, 0, mixer1, 0);
-AudioConnection          patchCord5(Pass_1, 1, mixer1, 1);
-AudioConnection          patchCord6(mixer1, 0, i2s2, 0);
+AudioConnection          patchCord3(PUBlend, Cuts);
+AudioConnection          patchCord4(PUBlend, 0, bassPass, 0);
+AudioConnection          patchCord5(PUBlend, 0, midPass, 0);
+AudioConnection          patchCord6(PUBlend, 0, mixer1, 0);
+AudioConnection          patchCord7(Cuts, 0, mixer1, 3);
+AudioConnection          patchCord8(midPass, 1, mixer1, 2);
+AudioConnection          patchCord9(bassPass, 0, mixer1, 1);
+AudioConnection          patchCord10(mixer1, 0, i2s2, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=205,115
 // GUItool: end automatically generated code
 
@@ -167,7 +172,18 @@ int setting = 1;
 int setting2 = 1;
 int level = 1;
 // EQ Settings
+// Initial Filter Settings
 
+float CutsMidF = 1000;
+float CutsMidQ = 2;
+float CutsMidG = 0;
+
+float bassPassF = 140;
+float bassPassQ = 5;
+
+float bassPassG = 0;
+  
+float vol = 1;
 // main code here, to run repeatedly: 
 void loop() {
 // Dynamic and tone
@@ -179,13 +195,30 @@ void loop() {
   fsr = fsr1-fsr2;
   int avg = avgFSR.reading(fsr);
 // Set parameters
+// Bridge pick-up gain pu1g
 float pu1g = .5+Mid/100;
+// Neck Pick up gain pu2g
 float pu2g = 1-pu1g;
-PUBlend.gain(0,pu1g);
-PUBlend.gain(2,pu2g); 
+
+// Process Sound
+PUBlend.gain(1,pu1g);
+PUBlend.gain(0,pu2g); 
+
+bassPassG=Bridge*0.01;
+CutsMidG=Bridge2*0.04;
+vol = 1-(bassPassG);
+bassPass.frequency(bassPassF);bassPass.resonance(bassPassQ);
+midPass.frequency(CutsMidF);midPass.resonance(CutsMidQ);
+
+mixer1.gain(3,0);
+mixer1.gain(2,CutsMidG);
+mixer1.gain(1,bassPassG);
+mixer1.gain(0,vol);
+
+
 
 // #### debug #####  TO BE COMMENTED OUT IN GIGIING VERSION
-//Serial.print(String(Bridge)+",");
+Serial.print(String(Bridge)+",");
 //Serial.print(String(Bridge2)+",");
 //Serial.print(String(Bridge3)+",");
 //Serial.print(String(Mid)+",");
@@ -194,7 +227,9 @@ PUBlend.gain(2,pu2g);
 //Serial.print(String(Neck2)+",");
 //Serial.print(String(fsr)+",");
 //Serial.print(String(avg)+",");
-Serial.print("Pick up 1 Gain: "+String(pu1g)+"   Pick up 2 gain: "+String(pu2g));
+//Serial.print("Sensor: "+String(Bridge)+"   BP1F: "+String(BP1F)+"   BP1Q: "+String(BP1Q)+"   Bass Gain: "+String(BassGain));
+Serial.print(String(bassPassF)+","+String(bassPassQ)+","+String(CutsMidG));
+//Serial.print("Sensor: "+String(Bridge2)+"   BN1F: "+String(BN1F)+"   BN1aF: "+String(BN1aF)+"   BN1aQ: "+String(BN1aQ));
 Serial.println("");
 
 // read encoder settings
@@ -289,12 +324,12 @@ if (newNeckPosition <0){
     myEnc3.write(0);
     
   }
-  if (newNeckPosition >200){
-    myEnc3.write(200);
+  if (newNeckPosition >100){
+    myEnc3.write(100);
   }
    if (newNeckPosition != NeckPosition) {
    NeckPosition = newNeckPosition;
-  Neck = constrain(newNeckPosition,-50,200);
+  Neck = constrain(newNeckPosition,0,100);
    }}
 
   if (setting2==2){
