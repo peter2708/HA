@@ -3,7 +3,9 @@
 * Gunk Stripped out
 * Sensors cleaned up and working
 * Neck smoothed
-* Ready to add simple tone and pan
+* Ring modulation added could use more sophistication with frequency control of ring modulation
+* 
+* simple tone and pan added, could use more sophistication or at least tweaking with tone
 * ############### TO DO ############################
  *  1. Add global variables so that parameters can be used directly in effects
  *  1. b) add fade in   ########## FAILED  ##############

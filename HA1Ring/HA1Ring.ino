@@ -105,7 +105,7 @@ int fsr2Pin = A18;
 int fsr1; int fsr2; float fsr;
 
 movingAvg avgFSR(10);                  // define the moving average object
-movingAvg avg2FSR(100);                  // define the SECOND moving average object
+movingAvg avg2FSR(25);                  // define the SECOND moving average object
 // setup code here, to run once:
 void setup() {
 /*
@@ -213,7 +213,7 @@ CutsMidG=Bridge2*0.04;
 vol = 1-(bassPassG);
 bassPass.frequency(bassPassF);bassPass.resonance(bassPassQ);
 midPass.frequency(CutsMidF);midPass.resonance(CutsMidQ);
-float fsrVol =constrain((avg-(avg2+10))*0.07,0,2);
+float fsrVol =constrain((avg-(avg2))*0.07,0,2);
 waveform1.begin(0.5,12,WAVEFORM_TRIANGLE);
 mixer1.gain(3,fsrVol);
 mixer1.gain(2,CutsMidG);
@@ -235,7 +235,7 @@ Serial.print(String(avg)+",");
 //Serial.print("Sensor: "+String(Bridge)+"   BP1F: "+String(BP1F)+"   BP1Q: "+String(BP1Q)+"   Bass Gain: "+String(BassGain));
 //Serial.print(String(bassPassF)+","+String(bassPassQ)+","+String(CutsMidG));
 //Serial.print("Sensor: "+String(Bridge2)+"   BN1F: "+String(BN1F)+"   BN1aF: "+String(BN1aF)+"   BN1aQ: "+String(BN1aQ));
-Serial.print("Long time average "+ String(fsrVol)); 
+Serial.print("Long time average "+ String(avg2)); 
 Serial.println("");
 
 // read encoder settings
