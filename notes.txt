@@ -4,7 +4,7 @@
 * Sensors cleaned up and working
 * Neck smoothed
 * Ring modulation added could use more sophistication with frequency control of ring modulation
-* 
+* Wah added, could use some sophistication and tweaking
 * simple tone and pan added, could use more sophistication or at least tweaking with tone
 * ############### TO DO ############################
  *  1. Add global variables so that parameters can be used directly in effects
