@@ -27,43 +27,44 @@ LED:
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioFilterStateVariable preproc;        //xy=127.00003814697266,732.000165939331
-AudioMixer4              PUBlend;        //xy=169.00005340576172,486.00002670288086
+AudioMixer4              PUBlend;        //xy=139.00006294250488,314.000057220459
 AudioInputI2S            i2s1;           //xy=193,166
-AudioAnalyzeRMS          rms1;           //xy=211.00000381469727,619.0000648498535
-AudioSynthWaveformDc     dc1;            //xy=213.99999618530273,662.0000343322754
-AudioAnalyzeNoteFrequency freq;      //xy=258.0000457763672,732.0001029968262
-AudioSynthWaveformDc     dc2;            //xy=304.99999618530273,791.0000400543213
-AudioSynthWaveform       waveform2;      //xy=307.00006103515625,830.0001697540283
-AudioFilterStateVariable wah;        //xy=434.0000190734863,658.0000324249268
-AudioEffectMultiply      multiply2;      //xy=455.0000877380371,824.0001697540283
-AudioFilterStateVariable bassPass;        //xy=686.0001640319824,246.00006103515625
-AudioFilterStateVariable midPass;        //xy=687.0001640319824,305.0000810623169
-AudioSynthWaveform       waveform1;      //xy=817.000114440918,495.0000877380371
-AudioMixer4              mixer2;         //xy=828.9999847412109,718.9999923706055
-AudioMixer4              mixer1;         //xy=919.0004348754883,216.00010681152344
-AudioEffectMultiply      multiply1;      //xy=1001.0000343322754,510.0000247955322
-AudioOutputI2S           i2s2;           //xy=1208.0004539489746,653.0000610351562
-AudioConnection          patchCord1(PUBlend, 0, freq, 0);
-AudioConnection          patchCord2(PUBlend, 0, bassPass, 0);
-AudioConnection          patchCord3(PUBlend, 0, midPass, 0);
-AudioConnection          patchCord4(PUBlend, 0, mixer1, 0);
-AudioConnection          patchCord5(PUBlend, rms1);
-AudioConnection          patchCord6(PUBlend, 0, wah, 0);
-AudioConnection          patchCord7(PUBlend, 0, preproc, 0);
-AudioConnection          patchCord8(PUBlend, 0, mixer2, 0);
-AudioConnection          patchCord9(i2s1, 0, PUBlend, 0);
-AudioConnection          patchCord10(i2s1, 1, PUBlend, 1);
-AudioConnection          patchCord11(dc1, 0, wah, 1);
-AudioConnection          patchCord12(dc2, 0, multiply2, 0);
-AudioConnection          patchCord13(waveform2, 0, multiply2, 1);
-AudioConnection          patchCord14(multiply2, 0, mixer2, 1);
-AudioConnection          patchCord15(bassPass, 0, mixer1, 1);
-AudioConnection          patchCord16(midPass, 1, mixer1, 2);
+AudioFilterStateVariable PREPROC;        //xy=285.00006103515625,322.0000114440918
+AudioAnalyzeNoteFrequency freq;      //xy=484.00012588500977,372.00031089782715
+AudioAnalyzeRMS          rms1;           //xy=484.00001525878906,418.0001220703125
+AudioFilterStateVariable midPass;        //xy=503.0003204345703,324.00014305114746
+AudioFilterStateVariable bassPass;        //xy=505.00053787231445,267.0001525878906
+AudioMixer4              EQMix;         //xy=694.0005531311035,217.000150680542
+AudioSynthWaveformDc     dc1;            //xy=773.0000991821289,334.00011444091797
+AudioSynthWaveformDc     dc2;            //xy=773.0000457763672,382.00024223327637
+AudioSynthWaveform       waveform2;      //xy=775.0001106262207,421.0003719329834
+AudioSynthWaveform       waveform1;      //xy=861.0002365112305,246.00015449523926
+AudioFilterStateVariable wah;        //xy=901.0000534057617,328.0000991821289
+AudioEffectMultiply      multiply2;      //xy=902.0001182556152,400.0002384185791
+AudioEffectMultiply      multiply1;      //xy=1016.0002403259277,224.00011253356934
+AudioMixer4              FXMix;         //xy=1233.0001106262207,201.00009727478027
+AudioOutputI2S           i2s2;           //xy=1374.0005798339844,208.0000982284546
+AudioConnection          patchCord1(PUBlend, 0, PREPROC, 0);
+AudioConnection          patchCord2(i2s1, 0, PUBlend, 0);
+AudioConnection          patchCord3(i2s1, 1, PUBlend, 1);
+AudioConnection          patchCord4(PREPROC, 2, bassPass, 0);
+AudioConnection          patchCord5(PREPROC, 2, EQMix, 0);
+AudioConnection          patchCord6(PREPROC, 2, midPass, 0);
+AudioConnection          patchCord7(PREPROC, 2, freq, 0);
+AudioConnection          patchCord8(PREPROC, 2, rms1, 0);
+AudioConnection          patchCord9(midPass, 1, EQMix, 2);
+AudioConnection          patchCord10(bassPass, 0, EQMix, 1);
+AudioConnection          patchCord11(EQMix, 0, multiply1, 0);
+AudioConnection          patchCord12(EQMix, 0, wah, 0);
+AudioConnection          patchCord13(EQMix, 0, FXMix, 0);
+AudioConnection          patchCord14(dc1, 0, wah, 1);
+AudioConnection          patchCord15(dc2, 0, multiply2, 0);
+AudioConnection          patchCord16(waveform2, 0, multiply2, 1);
 AudioConnection          patchCord17(waveform1, 0, multiply1, 1);
-AudioConnection          patchCord18(mixer2, 0, i2s2, 0);
-AudioConnection          patchCord19(mixer1, 0, multiply1, 0);
-AudioConnection          patchCord20(multiply1, 0, mixer1, 3);
+AudioConnection          patchCord18(wah, 1, FXMix, 2);
+AudioConnection          patchCord19(multiply2, 0, FXMix, 3);
+AudioConnection          patchCord20(multiply1, 0, FXMix, 1);
+AudioConnection          patchCord21(FXMix, 0, i2s2, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=205,115
 // GUItool: end automatically generated code
 
@@ -197,38 +198,46 @@ int setting = 1;
 int setting2 = 1;
 int level = 1;
 // EQ Settings
+
+// Mixer Settings
+// EQMix
+int cleanch = 0;
+int basspassch = 1;
+int midpassch = 2;
+int modch = 1;
+int wahch = 2;
+int synthch = 3;
 // Initial Filter Settings
-
 float CutsMidF = 1000;
-float CutsMidQ = 2;
+float CutsMidQ = 5;
 float CutsMidG = 0;
-
 float bassPassF = 140;
 float bassPassQ = 5;
-
 float bassPassG = 0;
-  
+// initial volumes
+float fsrVol = 1;
 float vol = 1;
+float vol2 = 1;
 // main code here, to run repeatedly: 
 void loop() {
-// Dynamic and tone
-
-
-  // ###### FSRS ################ //
+ // ###### FSRS ################ //
   fsr1 = analogRead(fsr1Pin);
   fsr2 = analogRead(fsr2Pin);
   fsr = fsr1-fsr2;
   int avg = avgFSR.reading(fsr);
   int avg2 = avg2FSR.reading(avg);
-// Set parameters
+  // Panning
 // Bridge pick-up gain pu1g
 float pu1g = .5+Mid/100;
 // Neck Pick up gain pu2g
 float pu2g = 1-pu1g;
-
-bassPassG=Bridge*0.01;
-CutsMidG=Bridge2*0.04;
-vol = 1-(bassPassG);
+// Tone Controls
+bassPassG=pow(Bridge*0.01,0.8);
+bassPassF = 230-Bridge*1.4;
+CutsMidG=Bridge2*0.03;
+vol = 1-constrain((bassPassG+CutsMidG*0.5),0,1);
+// Testing
+float queue = Neck/2+0.01;
 
 float envelope = rms1.read();
 dc1.amplitude(envelope,30);
@@ -239,14 +248,14 @@ wah.frequency(300);
 wah.resonance(4);
 wah.octaveControl(30);
 
-preproc.frequency(450);
-preproc.resonance(0.7);
+PREPROC.frequency(50);
+PREPROC.resonance(5);
 
 float pitch = freq.read();
 
-waveform2.begin(1,pitch*0.5,WAVEFORM_PULSE);
+waveform2.begin(1,pitch*0.5,WAVEFORM_SQUARE);
 
-float fsrVol =constrain((avg-(avg2))*0.07,0,2);
+fsrVol =constrain((avg-(avg2))*0.07,0,2);
 
 waveform1.begin(0.5,12,WAVEFORM_TRIANGLE);
 
@@ -259,20 +268,25 @@ bassPass.frequency(bassPassF);bassPass.resonance(bassPassQ);
 midPass.frequency(CutsMidF);midPass.resonance(CutsMidQ);
 
 
-mixer1.gain(3,fsrVol);
-mixer1.gain(2,CutsMidG);
-mixer1.gain(1,bassPassG);
-mixer1.gain(0,vol);
+//EQMix.gain(3,fsrVol);
+EQMix.gain(midpassch,CutsMidG);
+EQMix.gain(basspassch,bassPassG);
+EQMix.gain(cleanch,vol);
+vol2 = 1-(Neck2*0.01);
+FXMix.gain(cleanch,vol2);
+FXMix.gain(modch,fsrVol*Mid2*0.01);
+FXMix.gain(wahch,Neck*0.01);
+FXMix.gain(synthch,Neck2*0.01);
 
-mixer2.gain(0,1);
-mixer2.gain(1,1);
 
 
 
 
 // #### debug #####  TO BE COMMENTED OUT IN GIGIING VERSION
-Serial.print(pitch);
-Serial.print(test);
+Serial.print(Neck2*0.01);
+Serial.print("   :   ");
+Serial.print(vol2);
+//Serial.print(test);
 //Serial.print(dc1.read());
 //Serial.print(String(Bridge)+",");
 //Serial.print(String(Bridge2)+",");
@@ -390,11 +404,11 @@ if (newNeckPosition <0){
    }}
 
   if (setting2==2){
-   if (newNeck2Position <-50){
-    myEnc3.write(-50);
+   if (newNeck2Position <0){
+    myEnc3.write(0);
   }
-  if (newNeck2Position >50){
-    myEnc3.write(50);
+  if (newNeck2Position >100){
+    myEnc3.write(100);
   }
    if (newNeck2Position != Neck2Position) {
    Neck2Position = newNeck2Position;
