@@ -2,6 +2,10 @@
  *  In Master 2...............
  *  Essentially a working prototype
  * Bass and mid controls, pan, wah, ring modulation and a poorly working synth
+ *  #################### Road Test  ############################
+ *  Wah sounds a bit tinny, find a sweeter center frequency, or change filter type
+ * Output distorts when I play hard -- first check that this is not the input, then adjust all mixer levels
+ * Tone control needs adjusting, only route here is just to play loud
  *  ############### TO DO ############################
  *  1. Refine Synth Effect
  *  2. Add Distortion, Chorus and Granular Synth
