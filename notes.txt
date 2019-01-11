@@ -3,8 +3,8 @@
  *  Essentially a working prototype
  * Bass and mid controls, pan, wah, ring modulation and a poorly working synth
  *  #################### Road Test  ############################
- *  Wah sounds a bit tinny, find a sweeter center frequency, or change filter type
- * Output distorts when I play hard -- first check that this is not the input, then adjust all mixer levels
+ *  Wah sounds a bit tinny, find a sweeter center frequency, or change filter type   -   update . Much improved
+ * Output distorts when I play hard -- first check that this is not the input, then adjust all mixer levels  - update : seems to be fixed, still to be checked on a good amp
  * Tone control needs adjusting, only route here is just to play loud
  *  ############### TO DO ############################
  *  1. Refine Synth Effect

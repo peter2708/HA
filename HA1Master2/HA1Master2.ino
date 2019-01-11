@@ -30,17 +30,22 @@ LED:
 AudioMixer4              PUBlend;        //xy=139.00006294250488,314.000057220459
 AudioInputI2S            i2s1;           //xy=193,166
 AudioFilterStateVariable PREPROC;        //xy=285.00006103515625,322.0000114440918
+AudioEffectWaveshaper    waveshape1;     //xy=373.99998474121094,817.3999938964844
+AudioEffectChorus        chorus1;        //xy=374.99998474121094,740.3999938964844
+AudioEffectFreeverb      freeverb1;      //xy=384.99998474121094,778.3999938964844
 AudioAnalyzeNoteFrequency freq;      //xy=484.00012588500977,372.00031089782715
 AudioAnalyzeRMS          rms1;           //xy=484.00001525878906,418.0001220703125
 AudioFilterStateVariable midPass;        //xy=503.0003204345703,324.00014305114746
+AudioFilterBiquad        Lowpass;        //xy=504.0000534057617,211.4000358581543
 AudioFilterStateVariable bassPass;        //xy=505.00053787231445,267.0001525878906
+AudioSynthWaveformDc     dc1;            //xy=670.0001564025879,323.0001230239868
 AudioMixer4              EQMix;         //xy=694.0005531311035,217.000150680542
-AudioSynthWaveformDc     dc1;            //xy=773.0000991821289,334.00011444091797
 AudioSynthWaveformDc     dc2;            //xy=773.0000457763672,382.00024223327637
 AudioSynthWaveform       waveform2;      //xy=775.0001106262207,421.0003719329834
+AudioFilterStateVariable wah;        //xy=798.0001106262207,317.00010776519775
 AudioSynthWaveform       waveform1;      //xy=861.0002365112305,246.00015449523926
-AudioFilterStateVariable wah;        //xy=901.0000534057617,328.0000991821289
 AudioEffectMultiply      multiply2;      //xy=902.0001182556152,400.0002384185791
+AudioMixer4              wahComb;         //xy=959.9999847412109,311.3999938964844
 AudioEffectMultiply      multiply1;      //xy=1016.0002403259277,224.00011253356934
 AudioMixer4              FXMix;         //xy=1233.0001106262207,201.00009727478027
 AudioOutputI2S           i2s2;           //xy=1374.0005798339844,208.0000982284546
@@ -52,19 +57,23 @@ AudioConnection          patchCord5(PREPROC, 2, EQMix, 0);
 AudioConnection          patchCord6(PREPROC, 2, midPass, 0);
 AudioConnection          patchCord7(PREPROC, 2, freq, 0);
 AudioConnection          patchCord8(PREPROC, 2, rms1, 0);
-AudioConnection          patchCord9(midPass, 1, EQMix, 2);
-AudioConnection          patchCord10(bassPass, 0, EQMix, 1);
-AudioConnection          patchCord11(EQMix, 0, multiply1, 0);
-AudioConnection          patchCord12(EQMix, 0, wah, 0);
-AudioConnection          patchCord13(EQMix, 0, FXMix, 0);
-AudioConnection          patchCord14(dc1, 0, wah, 1);
-AudioConnection          patchCord15(dc2, 0, multiply2, 0);
-AudioConnection          patchCord16(waveform2, 0, multiply2, 1);
-AudioConnection          patchCord17(waveform1, 0, multiply1, 1);
-AudioConnection          patchCord18(wah, 1, FXMix, 2);
-AudioConnection          patchCord19(multiply2, 0, FXMix, 3);
-AudioConnection          patchCord20(multiply1, 0, FXMix, 1);
-AudioConnection          patchCord21(FXMix, 0, i2s2, 0);
+AudioConnection          patchCord9(PREPROC, 2, Lowpass, 0);
+AudioConnection          patchCord10(midPass, 1, EQMix, 2);
+AudioConnection          patchCord11(Lowpass, 0, EQMix, 3);
+AudioConnection          patchCord12(bassPass, 0, EQMix, 1);
+AudioConnection          patchCord13(dc1, 0, wah, 1);
+AudioConnection          patchCord14(EQMix, 0, multiply1, 0);
+AudioConnection          patchCord15(EQMix, 0, wah, 0);
+AudioConnection          patchCord16(EQMix, 0, FXMix, 0);
+AudioConnection          patchCord17(dc2, 0, multiply2, 0);
+AudioConnection          patchCord18(waveform2, 0, multiply2, 1);
+AudioConnection          patchCord19(wah, 1, wahComb, 0);
+AudioConnection          patchCord20(wah, 2, wahComb, 1);
+AudioConnection          patchCord21(waveform1, 0, multiply1, 1);
+AudioConnection          patchCord22(multiply2, 0, FXMix, 3);
+AudioConnection          patchCord23(wahComb, 0, FXMix, 2);
+AudioConnection          patchCord24(multiply1, 0, FXMix, 1);
+AudioConnection          patchCord25(FXMix, 0, i2s2, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=205,115
 // GUItool: end automatically generated code
 
@@ -209,7 +218,7 @@ int wahch = 2;
 int synthch = 3;
 // Initial Filter Settings
 float CutsMidF = 1000;
-float CutsMidQ = 5;
+float CutsMidQ = 3;
 float CutsMidG = 0;
 float bassPassF = 140;
 float bassPassQ = 5;
@@ -240,15 +249,17 @@ vol = 1-constrain((bassPassG+CutsMidG*0.5),0,1);
 float queue = Neck/2+0.01;
 
 float envelope = rms1.read();
-dc1.amplitude(envelope,30);
+dc1.amplitude(envelope,50);
 dc2.amplitude(envelope);
 float test = dc2.read();
 
-wah.frequency(300);
-wah.resonance(4);
+wah.frequency(350);
+wah.resonance(5);
 wah.octaveControl(30);
 
-PREPROC.frequency(50);
+wahComb.gain(0,1);
+
+PREPROC.frequency(10);
 PREPROC.resonance(5);
 
 float pitch = freq.read();
@@ -272,7 +283,7 @@ midPass.frequency(CutsMidF);midPass.resonance(CutsMidQ);
 EQMix.gain(midpassch,CutsMidG);
 EQMix.gain(basspassch,bassPassG);
 EQMix.gain(cleanch,vol);
-vol2 = 1-(Neck2*0.01);
+vol2 = 1-(Neck2*0.01+Neck*0.01);
 FXMix.gain(cleanch,vol2);
 FXMix.gain(modch,fsrVol*Mid2*0.01);
 FXMix.gain(wahch,Neck*0.01);
