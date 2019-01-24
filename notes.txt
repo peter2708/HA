@@ -1,4 +1,4 @@
-/* 
+/* The theory is that this line of text should only be in display
  *  In Master 2...............
  *  Essentially a working prototype
  * Bass and mid controls, pan, wah, ring modulation and a poorly working synth
