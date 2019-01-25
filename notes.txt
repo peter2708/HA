@@ -1,5 +1,6 @@
-/* The theory is that this line of text should only be in display
- *  In Master 2...............
+/* 
+Display 2 is a bastard son of a working prototype and a new display.
+The riddle of storing set values from one module to another, and that of working sub menu displays has to now be addressed.
  *  Essentially a working prototype
  * Bass and mid controls, pan, wah, ring modulation and a poorly working synth
  *  #################### Road Test  ############################
