@@ -1,7 +1,13 @@
 /*  Created by Peter Williams 26/01/2019
  *   Added Comment - testing commit 2
  *   
- *  Neck step.... place encoder readings into arrays
+ *  Neck step.... continue to place encoder readings into arrays
+ *  Check that all my encoder floats have to be floats
+ *  MOST IMPORTANTLY
+ *  Find a way to set which pots have center or zero defaults dependant on module selection
+ *  
+ *  
+ *  git here:  https://github.com/peter2708/HA.git
  *  
  *  
 Neck encoder:
@@ -160,11 +166,17 @@ void setup() {
 } // setup
 // Set up encoder arrays
 int nmods = 11;
+
 const String names[11] = {"DEFAULT", "PARAMETRIC", "CHORUS", "DISTORTION", "WAH", "RING MOD", "TREMELO", "GRANULAR", "SYNTH", "REVERB", "DELAY"};
 // Parameters for default
 const String defNames[4] = {"PAN","MID","BASS","TREBLE"};
+
 // Parameters for PARAMETRIC
 const String parNames[4] = {"GAIN","FREQ","Q","NECK"};
+
+// Parameter Limits
+
+
 
 // starting encoder values
 // ########## MAKE SURE THESE MATCH STARTING VALUES  
@@ -174,8 +186,8 @@ float neck2Position  = -999;
 float Neck2 = 0;
 float neck3Position  = -999;
 float Neck3 = 0;
-float midPosition  = -999;
-float Mid = 5;
+int midPosition  = -999;
+float Mid[11];
 float mid2Position  = -999;
 float Mid2 = 0;
 float brijPosition  = -999;
@@ -190,13 +202,16 @@ int level = 1;
 // EQ Settings
 float pub1 = 0.5;
 float pub2 = 0.5;
+int modSel = 0;
 
 // main code here, to run repeatedly: 
 void loop() {
-int modSel = Neck*0.01*nmods;
-if (modSel == 0){
-// enter default variable algorithms here
-}
+int modSel = Neck*0.01*nmods;   // Set module selection
+/*
+ * Tone controls, including Pot Balance
+ */
+  pub2=0.5-Mid[0]*0.01;
+  pub1=1-pub2;
 
 PUBlend.gain(0,pub2);
 PUBlend.gain(1,pub1);
@@ -244,13 +259,13 @@ if (setting==2){
 /* ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  *  ¤¤¤¤¤¤¤¤¤¤¤ MIDDLE ENCODER ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  */
- Serial.print(modSel);Serial.print("   ");
+ 
 if (setting1==1){
-   if (newMidPosition <0){
-    myEnc2.write(0);
+   if (newMidPosition <-50){
+    myEnc2.write(-50);
   }
-  if (newMidPosition >100){
-    myEnc2.write(100);
+  if (newMidPosition >50){
+    myEnc2.write(50);
   }
    if (newMidPosition != midPosition) {
 if (modSel == 0){
@@ -259,15 +274,15 @@ if (modSel == 1){
   makeDisplay(names[modSel],parNames[0]);} 
 
 midPosition = newMidPosition;
-  Mid = constrain(newMidPosition,0,100);
+  Mid[modSel] = constrain(newMidPosition,-50,50);
   }}
   
 if (setting1==2){
    if (newMid2Position <0){
     myEnc2.write(0);
   }
-  if (newMid2Position >100){
-    myEnc2.write(100);
+  if (newMid2Position >128){
+    myEnc2.write(128);
   }
    if (newMid2Position != mid2Position) {
     if (modSel == 0){
@@ -275,7 +290,7 @@ if (setting1==2){
 if (modSel == 1){
   makeDisplay(names[modSel],parNames[1]);} 
    mid2Position = newMid2Position;
-  Mid2 = constrain(newMid2Position,0,100);
+  Mid2 = constrain(newMid2Position,0,128);
      }}
 /* ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  *  ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ BRIDGE ENCODER ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -317,19 +332,6 @@ if (modSel == 1){
   otherclicks();
   // keep watching the push button on neck pickup:
 
-//Serial.print(pow(nmods,-1));
-//Serial.print("  |  ");
-//Serial.print(Neck);
-//Serial.print("  |  ");
-//Serial.print(Neck2);
-//Serial.print("  |  ");
-//Serial.print(Mid);
-//Serial.print("  |  ");
-//Serial.print(Mid2);
-//Serial.print("  |  ");
-//Serial.print(Brij);
-//Serial.print("  |  ");
-//Serial.println(allnames[0][0]);
 
 } //eof loop
 
@@ -360,7 +362,7 @@ void otherclicks(){
   }
   else {
    setting1 = 1;
-   myEnc2.write(Mid);
+   myEnc2.write(Mid[modSel]);
    //delay(50);
   }
 
@@ -381,11 +383,12 @@ void makeDisplay(String label1,String label2){
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0,0); 
-    display.print(label1);   
-    //display.display();
-      display.setCursor(Mid,9);
-    //display.setCursor(0,0);
-    display.println(label2);
+    display.println(label1);   
+    display.print(label2);display.print(":   ");display.print(pub1);
+    display.drawRect(1, display.height()/2+2, display.width()-6, display.height()/2-2, WHITE);
+    display.setTextSize(2);
+    display.setCursor((50-Mid[modSel])*1.12,display.height()/2+2);
+    display.print('|');
     display.display();
 }
 
