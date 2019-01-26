@@ -5,7 +5,7 @@
  *  
  *  
 Neck encoder:
-29,28, A16
+29,28, A16(35)
 Middle encoder:
 26, 27, A15(34)
 Bridge encoder:
@@ -15,8 +15,7 @@ LED:
 */
 
 #include <Encoder.h>  // encoders library
-//#include "OneButton.h"  // Library for double, single and long press clicks, only works with one instance
-#include <Bounce2.h>  // Simple debouncer for clicks on encoders 2 & 3
+#include <Bounce2.h>  // Simple debouncer for clicks on encoders 
 #include <Adafruit_GFX.h> // For Display
 #include <Adafruit_SSD1306.h> // For Display
 
@@ -160,7 +159,13 @@ void setup() {
   
 } // setup
 // Set up encoder arrays
-char* names[11] = {"DEFAULT", "PARAMETRIC", "CHORUS", "DISTORTION", "WAH", "RING MOD", "TREMELO", "GRANULAR", "SYNTH", "REVERB", "DELAY"};
+int nmods = 11;
+const String names[11] = {"DEFAULT", "PARAMETRIC", "CHORUS", "DISTORTION", "WAH", "RING MOD", "TREMELO", "GRANULAR", "SYNTH", "REVERB", "DELAY"};
+// Parameters for default
+const String defNames[4] = {"PAN","MID","BASS","TREBLE"};
+// Parameters for PARAMETRIC
+const String parNames[4] = {"GAIN","FREQ","Q","NECK"};
+
 // starting encoder values
 // ########## MAKE SURE THESE MATCH STARTING VALUES  
 float neckPosition  = -999;
@@ -178,17 +183,20 @@ float Brij = 0;
 float brij2Position  = -999;
 float Brij2 = 0;
 // mode switching
-int setting = 1;
+int setting1 = 1;
 int setting2 = 1;
+int setting = 1;
 int level = 1;
 // EQ Settings
+float pub1 = 0.5;
+float pub2 = 0.5;
 
 // main code here, to run repeatedly: 
 void loop() {
-
-
-float pub1 = 0.5;
-float pub2 = 0.5;
+int modSel = Neck*0.01*nmods;
+if (modSel == 0){
+// enter default variable algorithms here
+}
 
 PUBlend.gain(0,pub2);
 PUBlend.gain(1,pub1);
@@ -204,8 +212,10 @@ PUBlend.gain(1,pub1);
   float newBrij2Position = myEnc3.read();
   
 /*  ############################ ENCODER READING #########################
+ *   
  *  ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ NECK ENCODER ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤   
  */
+
  if (setting==1){
    if (newNeckPosition <0){
     myEnc.write(0);
@@ -214,7 +224,7 @@ PUBlend.gain(1,pub1);
     myEnc.write(100);
   }
    if (newNeckPosition != neckPosition) {
-    makeDisplay();
+    makeDisplay(names[modSel],"");
    neckPosition = newNeckPosition;
   Neck = constrain(newNeckPosition,0,100);
   }}
@@ -227,14 +237,15 @@ if (setting==2){
     myEnc.write(100);
   }
    if (newNeck2Position != neck2Position) {
-    makeDisplay();
+   
    neck2Position = newNeck2Position;
   Neck2 = constrain(newNeck2Position,0,100);
      }}
 /* ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  *  ¤¤¤¤¤¤¤¤¤¤¤ MIDDLE ENCODER ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  */
-if (setting==1){
+ Serial.print(modSel);Serial.print("   ");
+if (setting1==1){
    if (newMidPosition <0){
     myEnc2.write(0);
   }
@@ -242,12 +253,16 @@ if (setting==1){
     myEnc2.write(100);
   }
    if (newMidPosition != midPosition) {
-    makeDisplay();
-   midPosition = newMidPosition;
+if (modSel == 0){
+  makeDisplay(names[modSel],defNames[0]);}
+if (modSel == 1){
+  makeDisplay(names[modSel],parNames[0]);} 
+
+midPosition = newMidPosition;
   Mid = constrain(newMidPosition,0,100);
   }}
   
-if (setting==2){
+if (setting1==2){
    if (newMid2Position <0){
     myEnc2.write(0);
   }
@@ -255,7 +270,10 @@ if (setting==2){
     myEnc2.write(100);
   }
    if (newMid2Position != mid2Position) {
-    makeDisplay();
+    if (modSel == 0){
+  makeDisplay(names[modSel],defNames[1]);}
+if (modSel == 1){
+  makeDisplay(names[modSel],parNames[1]);} 
    mid2Position = newMid2Position;
   Mid2 = constrain(newMid2Position,0,100);
      }}
@@ -272,7 +290,10 @@ if (newBrijPosition <0){
     myEnc3.write(200);
   }
    if (newBrijPosition != brijPosition) {
-    makeDisplay();
+   if (modSel == 0){
+  makeDisplay(names[modSel],defNames[2]);}
+if (modSel == 1){
+  makeDisplay(names[modSel],parNames[2]);} 
    brijPosition = newBrijPosition;
   Brij = constrain(newBrijPosition,-50,200);
    }}
@@ -285,17 +306,19 @@ if (newBrijPosition <0){
     myEnc3.write(50);
   }
    if (newBrij2Position != brij2Position) {
-    makeDisplay();
+    if (modSel == 0){
+  makeDisplay(names[modSel],defNames[3]);}
+if (modSel == 1){
+  makeDisplay(names[modSel],parNames[3]);} 
    brij2Position = newBrij2Position;
   Brij2 = constrain(newBrij2Position,-50,50);
  }}  
 // ##################################### END OF ENCODER READINGS #################################
   otherclicks();
   // keep watching the push button on neck pickup:
-//  button.tick();
 
-  
-//  delay(10);
+//Serial.print(pow(nmods,-1));
+//Serial.print("  |  ");
 //Serial.print(Neck);
 //Serial.print("  |  ");
 //Serial.print(Neck2);
@@ -306,29 +329,10 @@ if (newBrijPosition <0){
 //Serial.print("  |  ");
 //Serial.print(Brij);
 //Serial.print("  |  ");
-//Serial.println(Brij2);
-//Serial.print("  |  ");
+//Serial.println(allnames[0][0]);
+
 } //eof loop
 
-// click functions for neck encoder
-//void doubleclick() {
-//  // Serial.println("double clicked");
-//  myEnc.write(Neck2);
-// level = 2;
-// delay(20);
-//} 
-//void click() {
-// // Serial.println("single clicked");
-// myEnc.write(Neck);
-// level = 1;
-// delay(20);
-//} 
-//void press() {
-//  myEnc.write(Neck3);
-// level = 3;
-// delay(20);
-//  
-//} 
 void otherclicks(){
     // Update the Bounce instances :
   debouncer1.update();
@@ -350,12 +354,12 @@ void otherclicks(){
   }
   
   if (value1 == LOW){
-   setting = 2;
+   setting1 = 2;
    myEnc2.write(Mid2);
    delay(50);
   }
   else {
-   setting = 1;
+   setting1 = 1;
    myEnc2.write(Mid);
    //delay(50);
   }
@@ -372,17 +376,16 @@ void otherclicks(){
    delay(50);
     }}
 
-void makeDisplay(){
+void makeDisplay(String label1,String label2){
     display.clearDisplay();
-    display.setTextSize(2);
+    display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0,0); 
-    int modSel = Neck*.1;
-    display.println(names[modSel]);   
-    display.display();
-      display.setCursor(Mid,17);
+    display.print(label1);   
+    //display.display();
+      display.setCursor(Mid,9);
     //display.setCursor(0,0);
-    display.println(Mid);
+    display.println(label2);
     display.display();
 }
 
