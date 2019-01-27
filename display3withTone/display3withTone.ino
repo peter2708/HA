@@ -36,6 +36,7 @@ LED:
 // GUItool: begin automatically generated code
 AudioInputI2S            i2s1;           //xy=99.00000762939453,230.00000762939453
 AudioMixer4              PUBlend;        //xy=139.00006294250488,314.000057220459
+AudioFilterBiquad        LoPass;        //xy=273.99998474121094,405.99999237060547
 AudioFilterStateVariable BassTone;        //xy=277.00006103515625,344.00011444091797
 AudioMixer4              BassToneMix;         //xy=466.99999237060547,332.0000801086426
 AudioOutputI2S           i2s2;           //xy=598.0007514953613,339.00017833709717
@@ -43,9 +44,11 @@ AudioConnection          patchCord1(i2s1, 0, PUBlend, 0);
 AudioConnection          patchCord2(i2s1, 1, PUBlend, 1);
 AudioConnection          patchCord3(PUBlend, 0, BassTone, 0);
 AudioConnection          patchCord4(PUBlend, 0, BassToneMix, 0);
-AudioConnection          patchCord5(BassTone, 0, BassToneMix, 1);
-AudioConnection          patchCord6(BassTone, 2, BassToneMix, 2);
-AudioConnection          patchCord7(BassToneMix, 0, i2s2, 0);
+AudioConnection          patchCord5(PUBlend, LoPass);
+AudioConnection          patchCord6(LoPass, 0, BassToneMix, 3);
+AudioConnection          patchCord7(BassTone, 0, BassToneMix, 1);
+AudioConnection          patchCord8(BassTone, 2, BassToneMix, 2);
+AudioConnection          patchCord9(BassToneMix, 0, i2s2, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=205,115
 // GUItool: end automatically generated code
 
@@ -174,10 +177,10 @@ int nmods = 11;
 
 const String names[11] = {"DEFAULT", "PARAMETRIC", "CHORUS", "DISTORTION", "WAH", "RING MOD", "TREMELO", "GRANULAR", "SYNTH", "REVERB", "DELAY"};
 // Parameters for default
-const String defNames[4] = {"PAN","MID","BASS","TREBLE"};
+const String defNames[4] = {"PAN","MID","BASS","MID"};
 
 // Parameters for PARAMETRIC
-const String parNames[4] = {"GAIN","FREQ","Q","NECK"};
+const String parNames[4] = {"GAIN","NECK CONTROL","Q","NECK"};
 
 // Parameter Limits
 
@@ -196,7 +199,7 @@ float Mid[11];
 float mid2Position  = -999;
 float Mid2 = 0;
 float brijPosition  = -999;
-float Brij = 0;
+float Brij[11];
 float brij2Position  = -999;
 float Brij2 = 0;
 // mode switching
@@ -218,23 +221,37 @@ int modSel = Neck*0.01*nmods;   // Set module selection
   pub2=0.5-Mid[0]*0.01;
   pub1=1-pub2;
 
-  float bassG=constrain(Brij*0.01,0,1);
-  float bassC=constrain(Brij*-0.01,0,1);
+  float bassF=constrain(200-2.4*Brij[modSel],80,400);
+  float bassG=constrain(Brij[modSel]*0.01,0,1);
+  float bassC=constrain(Brij[modSel]*-0.01,0,1);
+  float bassLP=constrain(Brij[modSel]*0.003,0,1);
+  float bassClean=1-abs(Brij[modSel]*0.02);
 
-  BassToneMix.gain(0,1-(bassG+bassC));
+  BassTone.frequency(bassF);
+  BassTone.resonance(3);
+  LoPass.setLowpass(0,500,0.75);
+
+  BassToneMix.gain(0,bassClean);
   BassToneMix.gain(1,bassG);
   BassToneMix.gain(2,bassC);
+  BassToneMix.gain(3,bassLP);
 
-  Serial.print("bass G:  ");
+  
+
+/*
+ * Debug Tone
+ */
+  Serial.print("bass F:  ");
+  Serial.print(bassF);
+  Serial.print("   bass G:  ");
   Serial.print(bassG);
   Serial.print("   Bass C:  ");
   Serial.print(bassC);
   Serial.print("   Flat gain:  ");
-  Serial.println(1-(bassG+bassC));
-
-BassTone.frequency(100);
-BassTone.resonance(3);
-
+  Serial.print(bassClean);
+  Serial.print("  bass LP gain:  ");
+  Serial.println(bassLP);
+  
 PUBlend.gain(0,pub2);
 PUBlend.gain(1,pub1);
 
@@ -261,7 +278,7 @@ PUBlend.gain(1,pub1);
     myEnc.write(100);
   }
    if (newNeckPosition != neckPosition) {
-    makeDisplay(names[modSel],"");
+    makeDisplay(names[modSel],"",50,0);
    neckPosition = newNeckPosition;
   Neck = constrain(newNeckPosition,0,100);
   }}
@@ -291,9 +308,9 @@ if (setting1==1){
   }
    if (newMidPosition != midPosition) {
 if (modSel == 0){
-  makeDisplay(names[modSel],defNames[0]);}
+  makeDisplay(names[modSel],defNames[0],50,Mid[modSel]);}
 if (modSel == 1){
-  makeDisplay(names[modSel],parNames[0]);} 
+  makeDisplay(names[modSel],parNames[0],50,0);} 
 
 midPosition = newMidPosition;
   Mid[modSel] = constrain(newMidPosition,-50,50);
@@ -308,9 +325,9 @@ if (setting1==2){
   }
    if (newMid2Position != mid2Position) {
     if (modSel == 0){
-  makeDisplay(names[modSel],defNames[1]);}
+  makeDisplay(names[modSel],defNames[1],50,0);}
 if (modSel == 1){
-  makeDisplay(names[modSel],parNames[1]);} 
+  makeDisplay(names[modSel],parNames[1],50,0);} 
    mid2Position = newMid2Position;
   Mid2 = constrain(newMid2Position,0,128);
      }}
@@ -328,11 +345,11 @@ if (newBrijPosition <-50){
   }
    if (newBrijPosition != brijPosition) {
    if (modSel == 0){
-  makeDisplay(names[modSel],defNames[2]);}
+  makeDisplay(names[modSel],defNames[2],50,Brij[modSel]);}
 if (modSel == 1){
-  makeDisplay(names[modSel],parNames[2]);} 
+  makeDisplay(names[modSel],parNames[2],50,0);} 
    brijPosition = newBrijPosition;
-  Brij = constrain(newBrijPosition,-50,50);
+  Brij[modSel] = constrain(newBrijPosition,-50,50);
    }}
 
   if (setting2==2){
@@ -344,9 +361,9 @@ if (modSel == 1){
   }
    if (newBrij2Position != brij2Position) {
     if (modSel == 0){
-  makeDisplay(names[modSel],defNames[3]);}
+  makeDisplay(names[modSel],defNames[3],50,0);}
 if (modSel == 1){
-  makeDisplay(names[modSel],parNames[3]);} 
+  makeDisplay(names[modSel],parNames[3],50,0);} 
    brij2Position = newBrij2Position;
   Brij2 = constrain(newBrij2Position,-50,50);
  }}  
@@ -396,11 +413,11 @@ void otherclicks(){
     }
   else {
     setting2 = 1;
-   myEnc3.write(Brij);
+   myEnc3.write(Brij[modSel]);
    delay(50);
     }}
 
-void makeDisplay(String label1,String label2){
+void makeDisplay(String label1,String label2, int dispZ, float val){
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
@@ -409,7 +426,7 @@ void makeDisplay(String label1,String label2){
     display.print(label2);display.print(":   ");display.print(pub1);
     display.drawRect(1, display.height()/2+2, display.width()-6, display.height()/2-2, WHITE);
     display.setTextSize(2);
-    display.setCursor((50-Mid[modSel])*1.12,display.height()/2+2);
+    display.setCursor((dispZ-val)*1.12,display.height()/2+2);
     display.print('|');
     display.display();
 }
