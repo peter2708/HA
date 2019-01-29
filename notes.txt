@@ -3,7 +3,7 @@
 https://github.com/peter2708/HA.git
 
 Use git push --mirror for now
-Display3 with tone: Found a way to click through settings, much better. For example:
+Display 4 --- all dsp removed. Some way towards achieving array storage of parameters. Values don't seem to be updating correctly
 
 encoder 1 selects modules, let's say we have selected tone
 encoder 2, default is pan, click through to bass, low and high mid from here. This encoder controls gain.
