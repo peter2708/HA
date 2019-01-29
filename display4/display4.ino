@@ -190,8 +190,11 @@ void setup() {
 int nmods = 11;
 
 const String names[11] = {"DEFAULT", "PARAMETRIC", "CHORUS", "DISTORTION", "WAH", "RING MOD", "TREMELO", "GRANULAR", "SYNTH", "REVERB", "DELAY"};
-// Parameters for default
-const String parNames[8] = {"PAN","MID F","BASS","MID", // First set of parameters
+
+const int numParMid[11] = // This is the number of parameters on midlle encoder per module
+{4,2,3,4,5,6,7,8,9,10,11};
+
+const String parNames[8] = {"PAN","BASS","LOW MID","HIGH MID" , // First set of parameters
 "GAIN","NECK CONTROL","Q","NECK"};                      // Second Module parameters
 
 
@@ -203,6 +206,9 @@ const String parNames[8] = {"PAN","MID F","BASS","MID", // First set of paramete
 
 // starting encoder values
 // ########## MAKE SURE THESE MATCH STARTING VALUES  
+float newMidPosition[11][10];
+
+
 float neckPosition  = -999;
 float Neck = 0;
 float neck2Position  = 0;
@@ -210,7 +216,7 @@ float Neck2 = 0;
 float neck3Position  = 0;
 float Neck3 = 0;
 int midPosition  = 0;
-float Mid[11];
+int Mid[11][10];
 float mid2Position  = 0;
 float Mid2[11];
 float brijPosition  = 0;
@@ -227,88 +233,49 @@ float pub1 = 0.5;
 float pub2 = 0.5;
 int modSel = 0;
 
-int clickstate1 = 0;
-int lastclickstate1 = 1;
+int value1 = 0;
+int lastvalue1 = 1;
 int switch1 = 0;
 
 // main code here, to run repeatedly: 
 void loop() {
 int modSel = Neck*0.01*nmods;   // Set module selection
 /*
- * Tone controls, including Pot Balance
+ * Checking multidimensional array
  */
-  pub2=0.5-Mid[0]*0.01;
-  pub1=1-pub2;
-
-  float bassF=constrain(200-2.4*Brij[modSel],80,400);  // Bass tone control
-  float bassG=constrain(Brij[modSel]*0.01,0,1);
-  float bassC=constrain(Brij[modSel]*-0.01,0,1);
-  float bassLP=constrain(Brij[modSel]*0.003,0,1);
-  float bassClean=1-abs(Brij[modSel]*0.02);
-
-  BassTone.frequency(bassF);
-  BassTone.resonance(3);
-  LoPass.setLowpass(0,500,0.75);
-
-  BassToneMix.gain(0,bassClean);
-  BassToneMix.gain(1,bassG);
-  BassToneMix.gain(2,bassC);
-  BassToneMix.gain(3,bassLP);
-
-  float midF=1500+Mid2[modSel]*10;                                    // Mid Tone Control
-  float midG=constrain(Brij2[modSel]*0.01,0,1);
-  float midC=constrain(Brij2[modSel]*-0.01,0,1);
-  float midClean=1-abs(Brij2[modSel]*0.02);
-
-  MidTone.frequency(midF);
-  MidTone.resonance(3);
-
-  midToneMix.gain(0,midClean);    // clean level
-  midToneMix.gain(1,midG*2);    // For mid Gain
-  midToneMix.gain(2,midC);      // For cut
-  midToneMix.gain(3,midC);      // for cut
-
-  ToneMix.gain(0,0.5);        // From Bass Tone Mix
-  ToneMix.gain(1,0.5);        // From High Mid Mix
-  ToneMix.gain(2,0);          // From Low Mid Cut
-  ToneMix.gain(3,0);          // From Low Mid Cut
+  
   
 
 /*
  * Working on a button switch
  */
-  clickstate1 = debouncer1.read();
-  if (clickstate1 != lastclickstate1){
-    if (clickstate1 == HIGH){
-      // we went from off to on and we have a click
-      Serial.println("Click");
-     switch1++;
-    }
-   }
-   if (switch1>3){switch1=0;}
-    lastclickstate1=clickstate1;
-  Serial.print("lastclickstate1:   ");
-  Serial.print(lastclickstate1);
+  Serial.print("   Number of parameter:   ");
+  Serial.print(numParMid[modSel]-1);
+  Serial.print("  lastclickstate1:   ");
+  Serial.print(lastvalue1);
   Serial.print("   clickstate1:    ");
-  Serial.print(clickstate1);
+  Serial.print(value1);
   Serial.print("   switch1:   ");
-  Serial.println(switch1);
+  Serial.print(switch1);
+  Serial.print("  Read parameter label:  ");
+  Serial.print(parNames[switch1]);
+  Serial.print("   Current encoder mid reading:   ");
+  Serial.println(Mid[modSel][switch1]);
+  
   /*
    * e of working on a button switch
    */
-  
-PUBlend.gain(0,pub2);
-PUBlend.gain(1,pub1);
 
 
 
 // read encoder settings
   float newNeckPosition = myEnc.read();
-  float newNeck2Position = myEnc.read();
-  float newMidPosition = myEnc2.read();
-  float newMid2Position = myEnc2.read();
-  float newBrijPosition = myEnc3.read();
-  float newBrij2Position = myEnc3.read();
+//  float newNeck2Position = myEnc.read();
+  newMidPosition[modSel][switch1] = myEnc2.read();
+ // Serial.println(Mid[modSel][switch1]); 
+//  float newMid2Position = myEnc2.read();
+//  float newBrijPosition = myEnc3.read();
+//  float newBrij2Position = myEnc3.read();
   
 /*  ############################ ENCODER READING #########################
  *   
@@ -328,99 +295,101 @@ PUBlend.gain(1,pub1);
   Neck = constrain(newNeckPosition,0,100);
   }}
   
-if (setting==2){
-   if (newNeck2Position <0){
-    myEnc.write(0);
-  }
-  if (newNeck2Position >100){
-    myEnc.write(100);
-  }
-   if (newNeck2Position != neck2Position) {
-   
-   neck2Position = newNeck2Position;
-  Neck2 = constrain(newNeck2Position,0,100);
-     }}
+//if (setting==2){
+//   if (newNeck2Position <0){
+//    myEnc.write(0);
+//  }
+//  if (newNeck2Position >100){
+//    myEnc.write(100);
+//  }
+//   if (newNeck2Position != neck2Position) {
+//   
+//   neck2Position = newNeck2Position;
+//  Neck2 = constrain(newNeck2Position,0,100);
+//     }}
 /* ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  *  ¤¤¤¤¤¤¤¤¤¤¤ MIDDLE ENCODER ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  */
  
-if (setting1==1){
-   if (newMidPosition <-50){
+
+   if (newMidPosition[modSel][switch1] <-50){
     myEnc2.write(-50);
   }
-  if (newMidPosition >50){
+  if (newMidPosition[modSel][switch1] >50){
     myEnc2.write(50);
   }
-   if (newMidPosition != midPosition) {
+   if (newMidPosition[modSel][switch1] != midPosition) {
+Serial.println("Display update with parameter value has been called");
+  makeDisplay(parNames[switch1],50,Mid[modSel][switch1]);
 
-  makeDisplay(parNames[modSel*4],50,Mid[modSel]);
-
-midPosition = newMidPosition;
-  Mid[modSel] = constrain(newMidPosition,-50,50);
-  }}
+midPosition = newMidPosition[modSel][switch1];
+  Mid[modSel][switch1] = constrain(newMidPosition[modSel][switch1],-50,50);
+  }
   
-if (setting1==2){
-   if (newMid2Position <0){
-    myEnc2.write(0);
-  }
-  if (newMid2Position >128){
-    myEnc2.write(128);
-  }
-   if (newMid2Position != mid2Position) {
-    
-  makeDisplay(parNames[modSel*4+1],50,Mid2[modSel]);
 
-   mid2Position = newMid2Position;
-  Mid2[modSel] = constrain(newMid2Position,-50,50);
-     }}
 /* ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  *  ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ BRIDGE ENCODER ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
  */
      
-if (setting2==1){
-if (newBrijPosition <-50){
-    myEnc3.write(-50);
-    
-  }
-  if (newBrijPosition >50){
-    myEnc3.write(50);
-  }
-   if (newBrijPosition != brijPosition) {
-  
-  makeDisplay(parNames[modSel*4+2],50,Brij[modSel]);
-
-   brijPosition = newBrijPosition;
-  Brij[modSel] = constrain(newBrijPosition,-50,50);
-   }}
-
-  if (setting2==2){
-   if (newBrij2Position <-50){
-    myEnc3.write(-50);
-  }
-  if (newBrij2Position >50){
-    myEnc3.write(50);
-  }
-   if (newBrij2Position != brij2Position) {
-   
-  makeDisplay(parNames[modSel*4+3],50,Brij2[modSel]);
-
-   brij2Position = newBrij2Position;
-  Brij2[modSel] = constrain(newBrij2Position,-50,50);
- }}  
+//if (setting2==1){
+//if (newBrijPosition <-50){
+//    myEnc3.write(-50);
+//    
+//  }
+//  if (newBrijPosition >50){
+//    myEnc3.write(50);
+//  }
+//   if (newBrijPosition != brijPosition) {
+//  
+//  makeDisplay(parNames[modSel*4+2],50,Brij[modSel]);
+//
+//   brijPosition = newBrijPosition;
+//  Brij[modSel] = constrain(newBrijPosition,-50,50);
+//   }}
+//
+//  if (setting2==2){
+//   if (newBrij2Position <-50){
+//    myEnc3.write(-50);
+//  }
+//  if (newBrij2Position >50){
+//    myEnc3.write(50);
+//  }
+//   if (newBrij2Position != brij2Position) {
+//   
+//  makeDisplay(parNames[modSel*4+3],50,Brij2[modSel]);
+//
+//   brij2Position = newBrij2Position;
+//  Brij2[modSel] = constrain(newBrij2Position,-50,50);
+// }}  
 // ##################################### END OF ENCODER READINGS #################################
-  otherclicks();
+  otherclicks(numParMid[modSel]);
   // keep watching the push button on neck pickup:
 
 
 } //eof loop
 
-void otherclicks(){
-    // Update the Bounce instances :
+void otherclicks(int np1){
+    // Middle encoder
   debouncer1.update();
+  value1 = debouncer1.read();
+  if (value1 != lastvalue1){
+    if (value1 == HIGH){
+      // we went from off to on and we have a click
+      
+      
+     switch1++;
+    }
+   }
+   if (switch1>np1-1){
+    switch1=0;
+    }  // make sure clicks loop through the correct number of parameters
+    lastvalue1=value1;
+
+    
   debouncer2.update();
   debouncer3.update();
   // Get the updated value :
-  int value1 = debouncer1.read();
+  
   int value2 = debouncer2.read();
   int value3 = debouncer3.read();
   if (value3 == LOW){
@@ -433,19 +402,6 @@ void otherclicks(){
    myEnc.write(Neck);
    //delay(50);
   }
-  
-  if (value1 == LOW){
-   setting1 = 2;
-   myEnc2.write(Mid2[modSel]);
-   delay(50);
-  }
-  else {
-   setting1 = 1;
-   myEnc2.write(Mid[modSel]);
-   //delay(50);
-  }
-
-  
   if (value2 == LOW){
    setting2 = 2;
    myEnc3.write(Brij2[modSel]);
@@ -455,7 +411,12 @@ void otherclicks(){
     setting2 = 1;
    myEnc3.write(Brij[modSel]);
    delay(50);
-    }}
+    }
+    
+    }
+
+
+
 void makeDisplay1(String label1){
     display.clearDisplay();
     display.setTextSize(2);

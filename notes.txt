@@ -1,4 +1,8 @@
 /* 
+
+https://github.com/peter2708/HA.git
+
+Use git push --mirror for now
 Display3 with tone: Found a way to click through settings, much better. For example:
 
 encoder 1 selects modules, let's say we have selected tone
