@@ -1,4 +1,13 @@
 /* 
+Display3 with tone: Found a way to click through settings, much better. For example:
+
+encoder 1 selects modules, let's say we have selected tone
+encoder 2, default is pan, click through to bass, low and high mid from here. This encoder controls gain.
+encoder 3, click between Q and Freq
+
+Currenttly a Tone control is implemented. May have to start again to make this work
+
+
 Display 2 is a bastard son of a working prototype and a new display.
 The riddle of storing set values from one module to another, and that of working sub menu displays has to now be addressed.
  *  Essentially a working prototype
