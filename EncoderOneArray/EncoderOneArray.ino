@@ -1,29 +1,35 @@
-/* Encoder Library - Basic Example
- * http://www.pjrc.com/teensy/td_libs_Encoder.html
- *
- * This example code is in the public domain.
- */
-
 #include <Encoder.h>
-
-// Change these two numbers to the pins connected to your encoder.
-//   Best Performance: both pins have interrupt capability
-//   Good Performance: only the first pin has interrupt capability
-//   Low Performance:  neither pin has interrupt capability
-Encoder myEnc(5, 6);
-//   avoid using pins with LEDs attached
+Encoder neckEnc(29, 28);  // Neck rotation
+Encoder midEnc(27, 26);  // Neck rotation
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Basic Encoder Test:");
-}
-
-long oldPosition  = -999;
+  }
+int old[2];
+int readings[2];
 
 void loop() {
-  long newPosition = myEnc.read();
-  if (newPosition != oldPosition) {
-    oldPosition = newPosition;
-    Serial.println(newPosition);
-  }
+checkNeckEncoder();
+checkMidEncoder();  
 }
+
+
+void checkNeckEncoder(){
+  readings[0] = neckEnc.read();
+  if (readings[0] != old[0]) {
+    old[0] = readings[0];
+    printDebug();
+  }}
+void checkMidEncoder(){
+readings[1] = midEnc.read();
+  if (readings[1] != old[1]) {
+    old[1] = readings[1];
+    printDebug();
+  }}
+
+void printDebug(){
+  Serial.print(readings[0]);
+    Serial.print("     ");
+    Serial.println(readings[1]);
+}
+
