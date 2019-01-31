@@ -30,6 +30,9 @@ void setup() {
   debouncer2.interval(5); // interval in ms
   debouncer3.attach(CLICK_PIN3);
   debouncer3.interval(5); // interval in ms
+
+
+ Serial.print("Hello Startup Message");
   }
 int old[3];
 int readings[6]; // 3 ROTATE ENCODER READINGS FOLLOWED BY 3 CLICK READINGS
@@ -38,36 +41,40 @@ int clicks[3]={0,0,0};      // required for click updates
 int lastclicks[3]; // required for click updates
 int modSel=0;       // Module Selection number 
 float divisor = pow(110,-1)*numOfMods;
-int sub1[4];
-int sub2[4];
+int sub1;
+int sub2;
 int previousModSel = 99;
-int sub1max = 4;
-int sub1min = 0;
-int sub2max = 4;
-int sub2min = 0;
+//int sub1max = 4;
+//int sub1min = 0;
+//int sub2max = 4;
+//int sub2min = 0;
 
 // Some Labels
 String modules[3] = {"Tone","Synth","Chorus"};
-String labels[4][6] = {"PAN","BASS GAIN","LOW MID GAIN","HIGH MID GAIN",  // sub1 module 1 [0][0:3]
+String labels[6][4] = {"PAN","BASS GAIN","LOW MID GAIN","HIGH MID GAIN",  // sub1 module 1 [0][0:3]
 "WAVE","HARMONY","","",                                // sub1 module 2
 "RATE","DEPTH","LOW PASS","",                                // sub1 module 3
 "NECK CONTROL","FREQ","RESONANCE","",         // sub2 module 1
 "MIX","NECK","","",                                // sub2 module 2
 "MIX","NECK","",""};                              // sub2 module 3
-
-//String sub2aLabels[4] = {"NECK CONTROL","FREQ","RESONANCE"};
+int maxmin1[8] = {0,0,                         // max,min 
+2,1, 
+2,1,                            
+2,1};
 String sub1Label;
 String sub2Label;
+int max1; int min1; int max2; int min2;
+int startup=1;
+
 // String 
 
-
 void loop() {
-labelsAndSelections();
+
+
 checkEncoders();        // GET ENCODER READINGS
-otherclicks(3,4,0);         // Get click states
-}  /*
-EOF LOOP
-*/
+otherclicks(3,max2,min2);         // Get click states
+labelsAndSelections();
+} 
 
 
 void checkEncoders(){
@@ -76,7 +83,7 @@ void checkEncoders(){
     readings[2] = brijEnc.read();
     for (int i=0; i<3; i++){
   if (readings[i] != old[i]) {
-    printDebug();
+   printDebug();   // and call new display
     old[i] = readings[i];
   }
   }
@@ -99,20 +106,24 @@ void otherclicks(int sub1max, int sub2max, int sub2min){
     if (clicks[i] == LOW){
       // we went from off to on and we have a click
       readings[3+i]++;
-      printDebug();
-      delay(50);
+      printDebug();  // and call new display
+      //delay(50);
    }
    }
-
+/*
+ * Limit sub2 values
+ */
 if (readings[4]>sub1max){
   readings[4]=0;
     } 
     if (readings[5]>sub2max){
   readings[5]=sub2min;
-    }// make sure clicks loop through the correct number of parameters
-    
+    }
+    if (readings[5]<sub2min){
+   readings[5]=sub2min;   
+    }
     lastclicks[i]=clicks[i];
-}
+    }
 }
 void labelsAndSelections(){
   modSel = constrain(readings[0]*divisor,0,numOfMods-1);  // Determine Module Selection Number
@@ -121,7 +132,12 @@ if (modSel != previousModSel){
   readings[4]=0;readings[5]=0;
   previousModSel = modSel;
   }
+
+sub1 = readings[4];
+sub2 = readings[5]; 
+max2 = maxmin1[sub1*2]; min2 = maxmin1[sub1*2+1] ;
 sub1Label = labels[modSel][readings[4]];
+sub2Label = labels[modSel+numOfMods][readings[5]];
 }
 void printDebug(){
     Serial.print("  Encoder readings:  ");
@@ -137,11 +153,10 @@ Serial.print(modules[modSel]);
 Serial.print("  ");
 Serial.print(sub1Label);
 Serial.print("  ");
-Serial.println(sub2Label);
+Serial.print(sub2Label);
 
-
-
-
+Serial.print(" sub2 ");
+Serial.println(sub2);
 }
 
 
