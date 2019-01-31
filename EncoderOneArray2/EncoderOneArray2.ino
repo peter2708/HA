@@ -1,7 +1,7 @@
 /*
- * The label array and adressing needs to be fixed
+ * Next, change, store and update readings when switching between menus
+ * and add max and min values
  */
-
 #include <Encoder.h>
 #include <Bounce2.h>  // Simple debouncer for clicks on encoders 
 Encoder neckEnc(29, 28);  // Neck rotation
@@ -11,6 +11,9 @@ Encoder brijEnc(25,24);      // Bridge Encoder
 #define CLICK_PIN3 33
 #define CLICK_PIN2 34
 #define CLICK_PIN1 35 // Neck clicker
+
+#define numOfMods 3  // THE NUMBER OF MODULES
+#define maxPar 4 // MAX NUMBER OF PARAMETERS PER SUB MENU
 
 // Instantiate a Bounce object
 Bounce debouncer1 = Bounce(); 
@@ -30,28 +33,25 @@ void setup() {
   debouncer2.interval(5); // interval in ms
   debouncer3.attach(CLICK_PIN3);
   debouncer3.interval(5); // interval in ms
-
-
- Serial.print("Hello Startup Message");
+  Serial.print("Hello Startup Message");
   }
-int old[3];
+int old[numOfMods];
 int readings[6]; // 3 ROTATE ENCODER READINGS FOLLOWED BY 3 CLICK READINGS
-int numOfMods = 3;  // THE NUMBER OF MODULES
+int oldreadings[6];
+
 int clicks[3]={0,0,0};      // required for click updates
 int lastclicks[3]; // required for click updates
 int modSel=0;       // Module Selection number 
 float divisor = pow(110,-1)*numOfMods;
-int sub1;
-int sub2;
+int sub1=0;;
+int sub2=0;
 int previousModSel = 99;
-//int sub1max = 4;
-//int sub1min = 0;
-//int sub2max = 4;
-//int sub2min = 0;
+int lookupMid[numOfMods][4];
+int oldLookupMid[numOfMods][4];
 
 // Some Labels
-String modules[3] = {"Tone","Synth","Chorus"};
-String labels[6][4] = {"PAN","BASS GAIN","LOW MID GAIN","HIGH MID GAIN",  // sub1 module 1 [0][0:3]
+String modules[numOfMods] = {"Tone","Synth","Chorus"};
+String labels[numOfMods*2][4] = {"PAN","BASS GAIN","LOW MID GAIN","HIGH MID GAIN",  // sub1 module 1 [0][0:3]
 "WAVE","HARMONY","","",                                // sub1 module 2
 "RATE","DEPTH","LOW PASS","",                                // sub1 module 3
 "NECK CONTROL","FREQ","RESONANCE","",         // sub2 module 1
@@ -61,19 +61,32 @@ int maxmin1[8] = {0,0,                         // max,min
 2,1, 
 2,1,                            
 2,1};
+int maxs1[numOfMods]={3,1,2};
 String sub1Label;
 String sub2Label;
 int max1; int min1; int max2; int min2;
-int startup=1;
+int pan;
 
 // String 
 
 void loop() {
+/*
+ * Start reading and using values
+ */
+ // Create encoder reading storage
+
+lookupMid[modSel][sub1]=readings[1];
+
+// pan
+int pan = lookupMid[0][0];
+
+
 
 
 checkEncoders();        // GET ENCODER READINGS
-otherclicks(3,max2,min2);         // Get click states
+otherclicks(maxs1[modSel],maxmin1[sub1*2],maxmin1[sub1*2+1]);         // Get click states
 labelsAndSelections();
+printDebug();   // Will eventually be display
 } 
 
 
@@ -82,10 +95,6 @@ void checkEncoders(){
     readings[1] = midEnc.read();
     readings[2] = brijEnc.read();
     for (int i=0; i<3; i++){
-  if (readings[i] != old[i]) {
-   printDebug();   // and call new display
-    old[i] = readings[i];
-  }
   }
   if (readings[0]>110){
     neckEnc.write(0);
@@ -106,9 +115,10 @@ void otherclicks(int sub1max, int sub2max, int sub2min){
     if (clicks[i] == LOW){
       // we went from off to on and we have a click
       readings[3+i]++;
-      printDebug();  // and call new display
+     // printDebug();  // and call new display
       //delay(50);
-   }
+      //Serial.println("BITE ME!!!");
+     }
    }
 /*
  * Limit sub2 values
@@ -132,31 +142,31 @@ if (modSel != previousModSel){
   readings[4]=0;readings[5]=0;
   previousModSel = modSel;
   }
-
 sub1 = readings[4];
 sub2 = readings[5]; 
-max2 = maxmin1[sub1*2]; min2 = maxmin1[sub1*2+1] ;
 sub1Label = labels[modSel][readings[4]];
 sub2Label = labels[modSel+numOfMods][readings[5]];
 }
 void printDebug(){
-    Serial.print("  Encoder readings:  ");
-    for (int i=1; i < 6; i++){
-    Serial.print(readings[i]);
-    Serial.print("     ");}
-   // Serial.print(readings[3]);
-    Serial.print("");
-//Serial.print(readings[4]);
+for (int i=0; i<6; i++){
+  if (readings[i]!=oldreadings[i]){ 
+oldreadings[i]=readings[i];
+Serial.print("  Parameter Readings:  ");
+Serial.print(modules[modSel]);
+Serial.print(" : ");
 //Serial.print(readings[0]);
 Serial.print("  ");
-Serial.print(modules[modSel]);
-Serial.print("  ");
 Serial.print(sub1Label);
+Serial.print(" : ");
+Serial.print(readings[1]);
 Serial.print("  ");
 Serial.print(sub2Label);
-
-Serial.print(" sub2 ");
-Serial.println(sub2);
+Serial.print(" : ");
+Serial.print(readings[2]);
+Serial.print(" |  Pan reading: ");
+Serial.println(lookupMid[0][0]);
+} 
+}
 }
 
 
