@@ -1,6 +1,6 @@
 /*
- * Next, change, store and update readings when switching between menus
- * and add max and min values -- happily constrain values, but writing old values to encoder eludes me
+ * Current issue. If pot 3 is clicked, it wipes pot one memory. But we are nearly there.
+ * The rule needs to be, if sub2 changes while sub 1 and modSel remain the same, then only sub 2 is written to encoder
  */
 #include <Encoder.h>
 #include <Bounce2.h>  // Simple debouncer for clicks on encoders 
@@ -77,41 +77,46 @@ int maxmin1[2*maxPar] = {0,0,2,1,2,1,2,1};// max,min indexes for second sub menu
 int maxs1[numOfMods]={3,1,2};                       // Maximum indexes for first sub menu  
 // Some holders
 int readings[6];
-int par[numOfMods][maxPar]; //
+int par1[numOfMods][maxPar][maxPar]; //
+int par2[numOfMods][maxPar][maxPar]; //
 int prevM;  // previous menu selection
 int prevS1;
 int prevS2;
+int prevMenu[3];
 int value1;
 int value2;
 int value3;
 int modSel = 0;
-int sub[numOfMods];
-int sub2[numOfMods][maxPar];
+int sub1;
+int sub2;
 String modLabel;
 String subLabel;
+String sub2Label;
 // Some Labels
 String modLabels[numOfMods]={"TONE","WAH","RING MOD"};
 String subLabels[numOfMods][maxPar] = {"PAN","BASS GAIN","LOW MID G","HIGH MID G",
 "DECAY","SENSITIVITY","ANIMAL","DIRECTION"};
-
+String sub2Labels[numOfMods][maxPar] = {"ONE","TWO","THREE","FOUR",
+"FIVE","SIX","SEVEN","EIGHT"};
 
 void loop() {
   // set encoders
   // If module selection has changed, write the last correct value to the encoder
-  if ((prevM!=modSel) || (prevS1!=sub[modSel])){
-  midEnc.write(par[modSel][sub[modSel]]);
-  prevM=modSel;
-  prevS1=sub[modSel];
+  if ((prevMenu[0]!=modSel) || (prevMenu[1]!=sub1)||(prevMenu[2]!=sub2)){
+  midEnc.write(par1[modSel][sub1][sub2]);
+  brijEnc.write(par2[modSel][sub1][sub2]);
+  prevMenu[0]=modSel;
+  prevMenu[1]=sub1;
+  prevMenu[2]=sub2;
   }
-
-  
-
-  
 // stash previous values
-if(prevM==modSel){
-  par[modSel][sub[modSel]]=readings[1];
+if((prevMenu[0]==modSel)&&(prevMenu[1]==sub1)&&(prevMenu[2]==sub2)){
+  // menu[0]
+ par1[modSel][sub1][sub2]=readings[1];
+ par2[modSel][sub1][sub2]=readings[2];
 }
   // read encoders
+  // Neck
 readings[0] = neckEnc.read();
 if (readings[0]>numOfMods*modReg){
   neckEnc.write(numOfMods*modReg);
@@ -119,6 +124,7 @@ if (readings[0]>numOfMods*modReg){
 if (readings[0]<0){
   neckEnc.write(0);
 }
+// Mid
 readings[1] = midEnc.read();
 if (readings[1]>maxEnc){
   midEnc.write(maxEnc);
@@ -126,12 +132,13 @@ if (readings[1]>maxEnc){
 if (readings[1]<minEnc){
   midEnc.write(minEnc);
 }
+// Brij
 readings[2] = brijEnc.read();
 if (readings[2]>maxEnc){
   brijEnc.write(maxEnc);
 }
 if (readings[2]<minEnc){
-  neckEnc.write(minEnc);
+  brijEnc.write(minEnc);
 }
 // Read buttons
 // Neck
@@ -170,16 +177,14 @@ if (value3 == HIGH){
    }
 value3=nvalue3;
 }
-
 // Assign parameter values
 modSel = constrain(readings[0]/modReg,0,numOfMods-1);
 modLabel = modLabels[modSel];
-sub[modSel] = readings[4];
-subLabel = subLabels[modSel][sub[modSel]];
+sub1 = readings[4];
+sub2 = readings[5];
+subLabel = subLabels[modSel][sub1];
+sub2Label = sub2Labels[modSel][sub2];
 printDebug();   // Will eventually be display
-
-
-
 } 
 
 
@@ -199,7 +204,17 @@ display.print(subLabel);
 //display.println(switch1);  
 display.display();
 
-Serial.println(readings[5]);
+Serial.print(" Module:  ");
+Serial.print(modLabel);
+Serial.print(" :  ");
+Serial.print(subLabel);
+Serial.print(" :  ");
+Serial.print(readings[1]);
+Serial.print("   ");
+Serial.print(sub2Label);
+Serial.print("   ");
+Serial.println(readings[2]);
+
 }
     
 
