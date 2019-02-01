@@ -4,6 +4,8 @@
  */
 #include <Encoder.h>
 #include <Bounce2.h>  // Simple debouncer for clicks on encoders 
+#include <Adafruit_GFX.h> // For Display
+#include <Adafruit_SSD1306.h> // For Display
 Encoder neckEnc(29, 28);  // Neck rotation
 Encoder midEnc(27, 26);  // Mid rotation
 Encoder brijEnc(25,24);      // Bridge Encoder
@@ -20,7 +22,38 @@ Bounce debouncer1 = Bounce();
 Bounce debouncer2 = Bounce(); 
 Bounce debouncer3 = Bounce(); 
 
+#define OLED_RESET 4
+Adafruit_SSD1306 display(OLED_RESET);
+
+#define XPOS 0
+#define YPOS 1
+#define DELTAY 2
+
+
+#define LOGO16_GLCD_HEIGHT 16 
+#define LOGO16_GLCD_WIDTH  16 
+static const unsigned char PROGMEM logo16_glcd_bmp[] =
+{ B00000000, B11000000,
+  B00000001, B11000000,
+  B00000001, B11000000,
+  B00000011, B11100000,
+  B11110011, B11100000,
+  B11111110, B11111000,
+  B01111110, B11111111,
+  B00110011, B10011111,
+  B00011111, B11111100,
+  B00001101, B01110000,
+  B00011011, B10100000,
+  B00111111, B11100000,
+  B00111111, B11110000,
+  B01111100, B11110000,
+  B01110000, B01110000,
+  B00000000, B00110000 };
+
 void setup() {
+   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
+  display.clearDisplay(); // Cleraing the main buffer
   Serial.begin(9600);
     // Setup the button with an internal pull-up :
   pinMode(CLICK_PIN1,INPUT_PULLUP);
@@ -141,6 +174,7 @@ if (modSel != previousModSel){
   readings[4]=0;readings[5]=0;
   previousModSel = modSel;
   }
+  
 sub1 = readings[4];
 sub2 = readings[5]; 
 sub1Label = labels[modSel][readings[4]];
@@ -185,6 +219,15 @@ Serial.print(" : ");
 Serial.print(readings[2]);
 Serial.print(" |  Pan reading: ");
 Serial.println(pan);
+
+display.clearDisplay();
+display.setTextSize(2);
+display.setTextColor(WHITE);
+display.setCursor(0,0); 
+display.println(modules[modSel]);   
+display.display();
+
+    
 } 
 }
 }

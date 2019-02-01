@@ -141,6 +141,7 @@ if (modSel != previousModSel){
   readings[4]=0;readings[5]=0;
   previousModSel = modSel;
   }
+  
 sub1 = readings[4];
 sub2 = readings[5]; 
 sub1Label = labels[modSel][readings[4]];
