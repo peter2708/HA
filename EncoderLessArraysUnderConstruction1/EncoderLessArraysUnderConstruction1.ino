@@ -180,7 +180,7 @@ int value3;
 int modSel = 0;
 int sub1;
 int sub2;
-float bAvgPug;
+float pugFsrC;    // Pick up gain FSR coefiiecient
 String modLabel;
 String subLabel;
 String sub2Label;
@@ -285,14 +285,20 @@ subLabel = subLabels[modSel][sub1];
 sub2Label = sub2Labels[modSel][sub2];
 
 // Audio Algorithms
+Serial.print("Messgae: ");
 if ((par2[0][0][0]>10)||(par2[0][0][0]<-10)){  
-  Serial.println(par2[0][0][0]);   // if neck control is on, use this, otherwise, 1  
+  pugFsrC=par2[0][0][0]*0.02;     // if neck control is on, use this, otherwise, 1  
 }  // For neck control of PUG
-else {Serial.println("off");} 
-float bAvgPug=constrain(fsr*0.04-4.5,-1,1);
-float bpug=constrain((50+(par1[0][0][0]))*0.01,0,1)*bAvgPug;    // Bridge pick up gain
+else {pugFsrC=0;} 
+Serial.print(pugFsrC); 
+float bAvgPug=constrain((fsr-120)*pugFsrC,-50,50);
+float bpug=constrain((50+(par1[0][0][0])+bAvgPug)*0.01,0,1);//*bAvgPug;    // Bridge pick up gain
 float npug=1-bpug;                                              // Neck pick up gain
-
+Serial.print("   Fsr coefficeint:   ");
+Serial.print(bAvgPug);
+Serial.print("  Bridge pick-up gain:   ");
+Serial.println(bpug);
+delay(300);
 // Audio processing
 /*
  * Tone Section
@@ -318,13 +324,10 @@ ToneMix.gain(1,0.25);
 ToneMix.gain(2,0.25);
 ToneMix.gain(3,0.25);
 
-//printDebug(par2[0][0][0], bpug);   // Will eventually be display
+printDebug();   // Will eventually be display
 } 
 
-
-
-
-void printDebug(int v2, float v3){
+void printDebug(){
 
 display.clearDisplay();
 display.setTextSize(2);
@@ -334,25 +337,12 @@ display.print(modLabel);
 display.print("|"); 
 display.println(readings[1]);
 display.print(subLabel); 
-display.print(v2); 
+display.print(par2[modSel][sub1][sub2]); 
 //display.print("|"); 
 //display.println(switch1);  
 display.display();
 
-Serial.print(" Module:  ");
-Serial.print(modLabel);
-Serial.print(" : Sub label  ");
-Serial.print(subLabel);
-Serial.print(" :  ");
-Serial.print(par1[modSel][sub1][sub2]);
-Serial.print("   ");
-Serial.print(sub2Label);
-Serial.print("   ");
-Serial.print(par2[modSel][sub1][sub2]);
-Serial.print("   ");
-Serial.print(v2);
-Serial.print("   ");
-Serial.println(v3);
+
 
 }
     
