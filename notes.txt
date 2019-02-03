@@ -2,6 +2,8 @@
 
 https://github.com/peter2708/HA.git
 
+Under construction display now has audio. Shows great potential
+
 Use git push --mirror for now
 Display 4 --- all dsp removed. Some way towards achieving array storage of parameters. Values don't seem to be updating correctly
 

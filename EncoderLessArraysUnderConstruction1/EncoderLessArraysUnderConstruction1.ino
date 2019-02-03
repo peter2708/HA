@@ -2,6 +2,7 @@
  * Current issue. If pot 3 is clicked, it wipes pot one memory. But we are nearly there.
  * The rule needs to be, if sub2 changes while sub 1 and modSel remain the same, then only sub 2 is written to encoder
  */
+#include <movingAvg.h>                  // https://github.com/JChristensen/movingAvg
 #include <Encoder.h>
 #include <Bounce2.h>  // Simple debouncer for clicks on encoders 
 #include <Adafruit_GFX.h> // For Display
@@ -53,7 +54,97 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
   B01110000, B01110000,
   B00000000, B00110000 };
 
+// Audio
+#include <Audio.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
+
+// GUItool: begin automatically generated code
+AudioInputI2S            i2s1;           //xy=99.00000762939453,230.00000762939453
+AudioMixer4              PUBlend;        //xy=139.00006294250488,314.000057220459
+AudioFilterStateVariable MidTone;        //xy=267.99999618530273,451.0000228881836
+AudioFilterStateVariable BassTone;        //xy=278.0000762939453,353.0001468658447
+AudioFilterBiquad        LoPass;        //xy=284.99999618530273,398.00002002716064
+AudioMixer4              midToneMix;         //xy=463.00018310546875,403.00018310546875
+AudioMixer4              BassToneMix;         //xy=466.99999237060547,332.0000801086426
+AudioFilterStateVariable LowMidTone;        //xy=617.0001602172852,445.0001525878906
+AudioMixer4              ToneMix;         //xy=815.0001029968262,387.0001792907715
+AudioOutputI2S           i2s2;           //xy=960.0008316040039,392.00024032592773
+AudioConnection          patchCord1(i2s1, 0, PUBlend, 0);
+AudioConnection          patchCord2(i2s1, 1, PUBlend, 1);
+AudioConnection          patchCord3(PUBlend, 0, BassTone, 0);
+AudioConnection          patchCord4(PUBlend, 0, BassToneMix, 0);
+AudioConnection          patchCord5(PUBlend, LoPass);
+AudioConnection          patchCord6(PUBlend, 0, midToneMix, 0);
+AudioConnection          patchCord7(PUBlend, 0, MidTone, 0);
+AudioConnection          patchCord8(MidTone, 0, midToneMix, 2);
+AudioConnection          patchCord9(MidTone, 1, midToneMix, 1);
+AudioConnection          patchCord10(MidTone, 2, midToneMix, 3);
+AudioConnection          patchCord11(BassTone, 1, BassToneMix, 1);
+AudioConnection          patchCord12(BassTone, 2, BassToneMix, 2);
+AudioConnection          patchCord13(LoPass, 0, BassToneMix, 3);
+AudioConnection          patchCord14(midToneMix, 0, ToneMix, 1);
+AudioConnection          patchCord15(midToneMix, 0, LowMidTone, 0);
+AudioConnection          patchCord16(BassToneMix, 0, ToneMix, 0);
+AudioConnection          patchCord17(LowMidTone, 0, ToneMix, 2);
+AudioConnection          patchCord18(LowMidTone, 2, ToneMix, 3);
+AudioConnection          patchCord19(ToneMix, 0, i2s2, 0);
+AudioControlSGTL5000     sgtl5000_1;     //xy=205,115
+// GUItool: end automatically generated code
+#define GRANULAR_MEMORY_SIZE 12800*2  // enough for 290 ms at 44.1 kHz
+int16_t granularMemory[GRANULAR_MEMORY_SIZE];
+
+// Use these with the Teensy Audio Shield
+#define SDCARD_CS_PIN    10
+#define SDCARD_MOSI_PIN  7
+#define SDCARD_SCK_PIN   14
+
+// Use these with the Teensy 3.5 & 3.6 SD card
+#define SDCARD_CS_PIN    BUILTIN_SDCARD
+#define SDCARD_MOSI_PIN  11  // not actually used
+#define SDCARD_SCK_PIN   13  // not actually used
+const int myInput = AUDIO_INPUT_LINEIN;
+
+// Eof Audio
+int fsr1Pin = A17;
+int fsr2Pin = A18;
+int fsr1; int fsr2; float fsr;
+
+movingAvg avgFSR(10);                  // define the moving average object
+movingAvg avg2FSR(25);                  // define the SECOND moving average object
+
+ 
+
 void setup() {
+   // Initiate FSR smoothing
+   avgFSR.begin();
+   avg2FSR.begin();
+  /*
+ * For Teensy and Audio Shield
+ */
+  AudioMemory(120);
+  // Enable the audio shield, select input, and enable output
+  sgtl5000_1.enable();
+  sgtl5000_1.inputSelect(myInput);
+  sgtl5000_1.volume(1);
+   // the Granular effect requires memory to operate
+//  granular1.begin(granularMemory, GRANULAR_MEMORY_SIZE);
+
+  SPI.setMOSI(SDCARD_MOSI_PIN);
+  SPI.setSCK(SDCARD_SCK_PIN);
+  if (!(SD.begin(SDCARD_CS_PIN))) {
+    // stop here, but print a message repetitively
+    while (1) {
+      Serial.println("Unable to access the SD card");
+      delay(500);
+    }
+  }
+
+  /*
+   * Eof Teensy and Audio Shield
+   */
    // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
   display.clearDisplay(); // Cleraing the main buffer
@@ -89,6 +180,7 @@ int value3;
 int modSel = 0;
 int sub1;
 int sub2;
+float bAvgPug;
 String modLabel;
 String subLabel;
 String sub2Label;
@@ -177,6 +269,13 @@ if (value3 == HIGH){
    }
 value3=nvalue3;
 }
+// FSRS 
+  fsr1 = analogRead(fsr1Pin);
+  fsr2 = analogRead(fsr2Pin);
+  fsr = fsr1-fsr2;
+  int avg = avgFSR.reading(fsr);
+  int avg2 = avg2FSR.reading(avg);
+  
 // Assign parameter values
 modSel = constrain(readings[0]/modReg,0,numOfMods-1);
 modLabel = modLabels[modSel];
@@ -184,13 +283,48 @@ sub1 = readings[4];
 sub2 = readings[5];
 subLabel = subLabels[modSel][sub1];
 sub2Label = sub2Labels[modSel][sub2];
-printDebug();   // Will eventually be display
+
+// Audio Algorithms
+if ((par2[0][0][0]>10)||(par2[0][0][0]<-10)){  
+  Serial.println(par2[0][0][0]);   // if neck control is on, use this, otherwise, 1  
+}  // For neck control of PUG
+else {Serial.println("off");} 
+float bAvgPug=constrain(fsr*0.04-4.5,-1,1);
+float bpug=constrain((50+(par1[0][0][0]))*0.01,0,1)*bAvgPug;    // Bridge pick up gain
+float npug=1-bpug;                                              // Neck pick up gain
+
+// Audio processing
+/*
+ * Tone Section
+ */
+// Pick Up Balance
+PUBlend.gain(0,npug);                                   // Neck pick up gain
+PUBlend.gain(1,bpug);                                   // Bridge pick up gain
+PUBlend.gain(2,0);
+PUBlend.gain(3,0);
+// Bass Tone Mix
+BassToneMix.gain(0,1);
+BassToneMix.gain(1,0);
+BassToneMix.gain(2,0);
+BassToneMix.gain(3,0);
+// Mid Tone Mix
+midToneMix.gain(0,1);
+midToneMix.gain(1,0);
+midToneMix.gain(2,0);
+midToneMix.gain(3,0);
+// Tone Mix
+ToneMix.gain(0,0.25);
+ToneMix.gain(1,0.25);
+ToneMix.gain(2,0.25);
+ToneMix.gain(3,0.25);
+
+//printDebug(par2[0][0][0], bpug);   // Will eventually be display
 } 
 
 
 
 
-void printDebug(){
+void printDebug(int v2, float v3){
 
 display.clearDisplay();
 display.setTextSize(2);
@@ -200,20 +334,25 @@ display.print(modLabel);
 display.print("|"); 
 display.println(readings[1]);
 display.print(subLabel); 
+display.print(v2); 
 //display.print("|"); 
 //display.println(switch1);  
 display.display();
 
 Serial.print(" Module:  ");
 Serial.print(modLabel);
-Serial.print(" :  ");
+Serial.print(" : Sub label  ");
 Serial.print(subLabel);
 Serial.print(" :  ");
-Serial.print(readings[1]);
+Serial.print(par1[modSel][sub1][sub2]);
 Serial.print("   ");
 Serial.print(sub2Label);
 Serial.print("   ");
-Serial.println(readings[2]);
+Serial.print(par2[modSel][sub1][sub2]);
+Serial.print("   ");
+Serial.print(v2);
+Serial.print("   ");
+Serial.println(v3);
 
 }
     
