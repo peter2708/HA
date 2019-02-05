@@ -1,6 +1,5 @@
 /*
- * Current issue. If pot 3 is clicked, it wipes pot one memory. But we are nearly there.
- * The rule needs to be, if sub2 changes while sub 1 and modSel remain the same, then only sub 2 is written to encoder
+ *  Current issue, fill the max values table with fours
  */
 #include <movingAvg.h>                  // https://github.com/JChristensen/movingAvg
 #include <Encoder.h>
@@ -116,7 +115,7 @@ movingAvg avgFSR(10);                  // define the moving average object
 movingAvg avg2FSR(25);                  // define the SECOND moving average object
 
  
-
+int maxsub2[numOfMods][maxPar];
 void setup() {
    // Initiate FSR smoothing
    avgFSR.begin();
@@ -160,7 +159,10 @@ void setup() {
   debouncer2.interval(5); // interval in ms
   debouncer3.attach(CLICK_PIN3);
   debouncer3.interval(5); // interval in ms
-  Serial.print("Hello Startup Message");
+  welcome();
+  
+maxsub2[0][0]=1;
+maxsub2[1][0]=4;
   }
 
 // Some constraints
@@ -184,92 +186,27 @@ float pugFsrC;    // Pick up gain FSR coefiiecient
 String modLabel;
 String subLabel;
 String sub2Label;
+int sub2LabIx[numOfMods][maxPar][maxPar];
 // Some Labels
 String modLabels[numOfMods]={"TONE","WAH","RING MOD"};
 String subLabels[numOfMods][maxPar] = {"PAN","BASS GAIN","LOW MID G","HIGH MID G",
 "DECAY","SENSITIVITY","ANIMAL","DIRECTION"};
-String sub2Labels[numOfMods][maxPar] = {"ONE","TWO","THREE","FOUR",
-"FIVE","SIX","SEVEN","EIGHT"};
+String sub2Labels[numOfMods][maxPar] = {"NECK","RESONANCE","FREQUENCY"};
+// Some intialisers
+int oldModSel = 0;
+int oldSub1 = 0;
+int oldR1 = 0;
+// Assign Some constants
+
 
 void loop() {
-  // set encoders
-  // If module selection has changed, write the last correct value to the encoder
-  if ((prevMenu[0]!=modSel) || (prevMenu[1]!=sub1)||(prevMenu[2]!=sub2)){
-  //midEnc.write(par1[modSel][sub1][sub2]);
-  midEnc.write(par1[modSel][sub1]);
-  brijEnc.write(par2[modSel][sub1][sub2]);
-  prevMenu[0]=modSel;
-  prevMenu[1]=sub1;
-  prevMenu[2]=sub2;
-  }
-// stash previous values
-if((prevMenu[0]==modSel)&&(prevMenu[1]==sub1)&&(prevMenu[2]==sub2)){
-  // menu[0]
- par1[modSel][sub1]=readings[1];
- par2[modSel][sub1][sub2]=readings[2];
-}
-  // read encoders
-  // Neck
-readings[0] = neckEnc.read();
-if (readings[0]>numOfMods*modReg){
-  neckEnc.write(numOfMods*modReg);
-  }
-if (readings[0]<0){
-  neckEnc.write(0);
-}
-// Mid
-readings[1] = midEnc.read();
-if (readings[1]>maxEnc){
-  midEnc.write(maxEnc);
-}
-if (readings[1]<minEnc){
-  midEnc.write(minEnc);
-}
-// Brij
-readings[2] = brijEnc.read();
-if (readings[2]>maxEnc){
-  brijEnc.write(maxEnc);
-}
-if (readings[2]<minEnc){
-  brijEnc.write(minEnc);
-}
+readEncs();
+
+
 // Read buttons
-// Neck
-debouncer1.update();
-int nvalue1 = debouncer1.read();
-if (nvalue1!=value1){
-if (value1 == HIGH){
-  if(readings[3]>0){
-    readings[3]=-1;
-  }
-   readings[3]++;
-   }
-value1=nvalue1;
-}
-// Mid
-debouncer2.update();
-int nvalue2 = debouncer2.read();
-if (nvalue2!=value2){
-if (value2 == HIGH){
-  if(readings[4]>maxPar-2){
-    readings[4]=-1;
-  }
-   readings[4]++;
-   }
-value2=nvalue2;
-}
-// Bridge
-debouncer3.update();
-int nvalue3 = debouncer3.read();
- if (nvalue3!=value3){
-if (value3 == HIGH){
-  if(readings[5]>maxPar-2){
-    readings[5]=-1;
-   }
-   readings[5]++;
-   }
-value3=nvalue3;
-}
+
+readClicks();
+
 // FSRS 
   fsr1 = analogRead(fsr1Pin);
   fsr2 = analogRead(fsr2Pin);
@@ -297,7 +234,7 @@ float bpug=constrain((50+(par1[0][0])+bAvgPug)*0.01,0,1);//*bAvgPug;    // Bridg
 float npug=1-bpug;                                              // Neck pick up gain
 // For Bass Tone
 float bbpg = constrain(par1[0][1]*0.01,0,0.5);
-Serial.println(bbpg);
+
 // Audio processing
 /*
  * Tone Section
@@ -326,28 +263,131 @@ ToneMix.gain(1,0.25);
 ToneMix.gain(2,0.25);
 ToneMix.gain(3,0.25);
 
-printDebug(bbpg);   // Will eventually be display
+debug();
 } 
+void readEncs() {
+    // set encoders
 
-void printDebug(float v1){
+if ((prevMenu[0]!=modSel) || (prevMenu[1]!=sub1)){
+  readings[5]=0;
+ }    
+  // If module selection has changed, write the last correct value to the encoder
+  if ((prevMenu[0]!=modSel) || (prevMenu[1]!=sub1)||(prevMenu[2]!=sub2)){
+ midEnc.write(par1[modSel][sub1]);
+ brijEnc.write(par2[modSel][sub1][sub2]);
+  prevMenu[0]=modSel;
+  prevMenu[1]=sub1;
+  prevMenu[2]=sub2;
+  }
 
-display.clearDisplay();
-display.setTextSize(2);
-display.setTextColor(WHITE);
-display.setCursor(0,0); 
-display.print(modLabel); 
-display.print("|"); 
-display.println(readings[1]);
-display.print(sub2Label); 
-//display.print(par2[modSel][sub1][sub2]); 
-display.print("|"); 
-display.println(v1);  
-display.display();
 
+
+// stash previous values
+if((prevMenu[0]==modSel)&&(prevMenu[1]==sub1)){
+  // menu[0]
+ par1[modSel][sub1]=readings[1];}
+if ((prevMenu[0]==modSel)&&(prevMenu[1]==sub1)&&(prevMenu[2]==sub2)){
+ par2[modSel][sub1][sub2]=readings[2];
+}
+  // read encoders
+  // Neck
+readings[0] = neckEnc.read();
+if (readings[0]>numOfMods*modReg){
+  neckEnc.write(numOfMods*modReg);
+  }
+if (readings[0]<0){
+  neckEnc.write(0);
+}
+// Mid
+readings[1] = midEnc.read();
+if (readings[1]>maxEnc){
+  midEnc.write(maxEnc);
+}
+if (readings[1]<minEnc){
+  midEnc.write(minEnc);
+}
+// Brij
+readings[2] = brijEnc.read();
+if (readings[2]>maxEnc){
+  brijEnc.write(maxEnc);
+}
+if (readings[2]<minEnc){
+  brijEnc.write(minEnc);
+}
+}
+void readClicks(){
+  // Neck
+  debouncer1.update();
+int nvalue1 = debouncer1.read();
+if (nvalue1!=value1){
+if (value1 == HIGH){
+  if(readings[3]>0){
+    readings[3]=-1;
+  }
+   readings[3]++;
+   }
+value1=nvalue1;
+}
+// Mid
+debouncer2.update();
+int nvalue2 = debouncer2.read();
+if (nvalue2!=value2){
+if (value2 == HIGH){
+  if(readings[4]>maxPar-2){
+    readings[4]=-1;
+  }
+   readings[4]++;
+   }
+value2=nvalue2;
+}
+// Bridge
+debouncer3.update();
+int nvalue3 = debouncer3.read();
+ if (nvalue3!=value3){
+if (value3 == HIGH){
+  
+  if(readings[5]>maxsub2[modSel][sub1]-2){
+    readings[5]=-1;
+   }
+   readings[5]++;
+   }
+value3=nvalue3;
+}
+
+}
+
+void debug(){
+
+Serial.print("Module: ");
+Serial.print(modLabel);
+Serial.print("\t");
+Serial.print("Sub1: ");
+Serial.print(subLabel);
+Serial.print("\t");
+Serial.print(par1[modSel][sub1]);
+Serial.print("\t");
+Serial.print("Sub2: ");
+Serial.print(sub2);
+Serial.print("\t");
+Serial.print(par2[modSel][sub1][sub2]);
+
+
+Serial.print("\t");
+Serial.print("Maximum number of sub menus");
+Serial.println(maxsub2[modSel][sub1]);
 
 
 }
-    
+
+void welcome(){
+
+display.clearDisplay();
+display.setTextSize(3);
+display.setTextColor(WHITE);
+display.setCursor(0,0); 
+display.print("HA-BASS"); 
+display.display();
+}    
 
 
 
