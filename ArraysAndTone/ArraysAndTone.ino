@@ -1,5 +1,5 @@
 /*
- *  Current issue, fill the max values table with fours
+ *  Current issue, Check that all tone references are correct. Mid low and mid high are very quiet in gain mode
  */
 #include <movingAvg.h>                  // https://github.com/JChristensen/movingAvg
 #include <Encoder.h>
@@ -61,37 +61,44 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioInputI2S            i2s1;           //xy=99.00000762939453,230.00000762939453
-AudioMixer4              PUBlend;        //xy=139.00006294250488,314.000057220459
-AudioFilterStateVariable MidTone;        //xy=267.99999618530273,451.0000228881836
-AudioFilterStateVariable BassTone;        //xy=278.0000762939453,353.0001468658447
-AudioFilterBiquad        LoPass;        //xy=284.99999618530273,398.00002002716064
-AudioMixer4              midToneMix;         //xy=463.00018310546875,403.00018310546875
-AudioMixer4              BassToneMix;         //xy=466.99999237060547,332.0000801086426
-AudioFilterStateVariable LowMidTone;        //xy=617.0001602172852,445.0001525878906
-AudioMixer4              ToneMix;         //xy=815.0001029968262,387.0001792907715
-AudioOutputI2S           i2s2;           //xy=960.0008316040039,392.00024032592773
-AudioConnection          patchCord1(i2s1, 0, PUBlend, 0);
-AudioConnection          patchCord2(i2s1, 1, PUBlend, 1);
+AudioInputI2S            ip; //xy=83.00000381469727,214.40002632141113
+AudioMixer4              PUBlend; //xy=224.00007247924805,227.40009689331055
+AudioFilterBiquad        LoPass; //xy=394.0000343322754,366.40002822875977
+AudioFilterStateVariable BassTone; //xy=401.0001335144043,416.4002285003662
+AudioFilterStateVariable LowMidTone; //xy=411.0001029968262,317.40015411376953
+AudioFilterStateVariable HighMidTone; //xy=418.00014877319336,260.40014839172363
+AudioMixer4              tMix2; //xy=594.0002899169922,340.40028381347656
+AudioMixer4              tMix1; //xy=595.0002899169922,272.4002799987793
+AudioMixer4              tMix3;         //xy=595.0002975463867,409.40010261535645
+AudioMixer4              tMix4; //xy=748,246.39999389648438
+AudioAmplifier           amp1;           //xy=887.0001106262207,241.3999729156494
+AudioOutputI2S           op; //xy=1009.0001182556152,247.40003871917725
+AudioConnection          patchCord1(ip, 0, PUBlend, 0);
+AudioConnection          patchCord2(ip, 1, PUBlend, 1);
 AudioConnection          patchCord3(PUBlend, 0, BassTone, 0);
-AudioConnection          patchCord4(PUBlend, 0, BassToneMix, 0);
-AudioConnection          patchCord5(PUBlend, LoPass);
-AudioConnection          patchCord6(PUBlend, 0, midToneMix, 0);
-AudioConnection          patchCord7(PUBlend, 0, MidTone, 0);
-AudioConnection          patchCord8(MidTone, 0, midToneMix, 2);
-AudioConnection          patchCord9(MidTone, 1, midToneMix, 1);
-AudioConnection          patchCord10(MidTone, 2, midToneMix, 3);
-AudioConnection          patchCord11(BassTone, 1, BassToneMix, 1);
-AudioConnection          patchCord12(BassTone, 2, BassToneMix, 2);
-AudioConnection          patchCord13(LoPass, 0, BassToneMix, 3);
-AudioConnection          patchCord14(midToneMix, 0, ToneMix, 1);
-AudioConnection          patchCord15(midToneMix, 0, LowMidTone, 0);
-AudioConnection          patchCord16(BassToneMix, 0, ToneMix, 0);
-AudioConnection          patchCord17(LowMidTone, 0, ToneMix, 2);
-AudioConnection          patchCord18(LowMidTone, 2, ToneMix, 3);
-AudioConnection          patchCord19(ToneMix, 0, i2s2, 0);
-AudioControlSGTL5000     sgtl5000_1;     //xy=205,115
+AudioConnection          patchCord4(PUBlend, LoPass);
+AudioConnection          patchCord5(PUBlend, 0, HighMidTone, 0);
+AudioConnection          patchCord6(PUBlend, 0, LowMidTone, 0);
+AudioConnection          patchCord7(PUBlend, 0, tMix4, 0);
+AudioConnection          patchCord8(LoPass, 0, tMix3, 0);
+AudioConnection          patchCord9(BassTone, 0, tMix3, 2);
+AudioConnection          patchCord10(BassTone, 1, tMix3, 1);
+AudioConnection          patchCord11(BassTone, 2, tMix3, 3);
+AudioConnection          patchCord12(LowMidTone, 0, tMix2, 1);
+AudioConnection          patchCord13(LowMidTone, 1, tMix2, 0);
+AudioConnection          patchCord14(LowMidTone, 2, tMix2, 2);
+AudioConnection          patchCord15(HighMidTone, 0, tMix1, 1);
+AudioConnection          patchCord16(HighMidTone, 1, tMix1, 0);
+AudioConnection          patchCord17(HighMidTone, 2, tMix1, 2);
+AudioConnection          patchCord18(tMix2, 0, tMix4, 2);
+AudioConnection          patchCord19(tMix1, 0, tMix4, 1);
+AudioConnection          patchCord20(tMix3, 0, tMix4, 3);
+AudioConnection          patchCord21(tMix4, amp1);
+AudioConnection          patchCord22(amp1, 0, op, 0);
+AudioControlSGTL5000     sgtl5000_1;     //xy=95.99998474121094,277.39998626708984
 // GUItool: end automatically generated code
+
+
 #define GRANULAR_MEMORY_SIZE 12800*2  // enough for 290 ms at 44.1 kHz
 int16_t granularMemory[GRANULAR_MEMORY_SIZE];
 
@@ -209,7 +216,7 @@ int sub2LabIx[numOfMods][maxPar][maxPar];
 String modLabels[numOfMods]={"TONE","WAH","RING MOD"};
 String subLabels[numOfMods][maxPar] = {"PAN","BASS GAIN","LOW MID G","HIGH MID G",
 "DECAY","SENSITIVITY","ANIMAL","DIRECTION"};
-String sub2Labels[10] = {"NECK","RESONANCE","FREQUENCY","","","","","","","nine"};
+String sub2Labels[10] = {"NECK","FREQUENCY","RESONANCE","","","","","","","nine"};
 // Some intialisers
 int oldModSel = 0;
 int oldSub1 = 0;
@@ -245,18 +252,70 @@ sub2Label = sub2Labels[sub2LabelIDX];
 // Audio Algorithms
  // For neck control of PUG
 if ((par2[0][0][0]>10)||(par2[0][0][0]<-10)){  
-  pugFsrC=par2[0][0][0]*0.02;     // if neck control is on, use this, otherwise, 1  
+  pugFsrC=par2[0][0][0]*0.04;     // if neck control is on, use this, otherwise, 1  
 } 
 else {pugFsrC=0;} 
 float bAvgPug=constrain((fsr-120)*pugFsrC,-50,50);
 // Pan Control
 float bpug=constrain((50+(par1[0][0])+bAvgPug)*0.01,0,1);//*bAvgPug;    // Bridge pick up gain
-float npug=1-bpug;                                              // Neck pick up gain
+float npug=1-bpug;   // Neck pick up gain
+
+
 // For Bass Tone
-float bbpg = constrain(par1[0][1]*0.01,-0.5,0.5);      // Gain for Bass band pass
-//float bbpg = constrain(par1[0][1]*0.01,0,0.5);      // Gain for Bass hi pass (for cut)
-float bF = constrain(130+par2[0][1][1],80,200);
-float bQ = constrain(3+par2[0][1][0]*0.05,0.5,5);
+float bg = constrain(map(float(par1[0][1]),0,50,0,0.5),0,0.5);
+float bc = -constrain(map(float(par1[0][1]),0,50,0,0.5),-0.5,0);
+
+float bF = map(float(par2[0][1][0]),-50,50,80,250);
+float lpF = 10000-map(float(par1[0][1]),0,50,0,5000);
+float lpQ = map(float(par1[0][1]),0,50,2,5);
+float bQ = map(float(par2[0][1][1]),-50,50,.707,5);
+// For Low Mid Tone
+float lmg = constrain(map(float(par1[0][2]),0,50,0,1),0,1);
+float lmc = -constrain(map(float(par1[0][2]),0,50,0,0.5),-0.5,0);
+
+float lmF = map(float(par2[0][2][0]),-50,50,150,2000);
+float lmQ = map(float(par2[0][2][1]),-50,50,.707,5);
+// For High mid Tone
+float hmg = constrain(map(float(par1[0][3]),0,50,0,1),0,1);
+float hmc = -constrain(map(float(par1[0][3]),0,50,0,0.5),-0.5,0);
+
+float hmF = map(float(par2[0][3][0]),-50,50,1500,5000);
+float hmQ = map(float(par2[0][3][1]),-50,50,.707,5);
+
+// Filters --- Tone
+LoPass.setLowpass(0,lpF,lpQ);
+
+BassTone.frequency(bF);
+BassTone.resonance(bQ);
+
+LowMidTone.frequency(lmF);
+LowMidTone.resonance(lmQ);
+
+HighMidTone.frequency(hmF);
+HighMidTone.resonance(hmQ);
+// Clean/Tone Balance
+
+float cg = pow(0.1,(bg+bc+hmc+lmc)*2+hmg+lmg);
+// Tone Mixers
+tMix4.gain(0,cg);
+tMix4.gain(1,1);
+tMix4.gain(2,1);
+tMix4.gain(3,1);
+//
+tMix3.gain(0,bg);
+tMix3.gain(1,bg);
+tMix3.gain(2,bc);
+tMix3.gain(3,bc);
+//
+tMix2.gain(0,lmg);
+tMix2.gain(1,lmc);
+tMix2.gain(2,lmc);
+tMix2.gain(0,0);
+//
+tMix1.gain(0,hmg);
+tMix1.gain(1,hmc);
+tMix1.gain(2,hmc);
+tMix1.gain(3,0);
 
 // Audio processing
 /*
@@ -268,33 +327,14 @@ PUBlend.gain(0,npug);                                   // Neck pick up gain
 PUBlend.gain(1,bpug);                                   // Bridge pick up gain
 PUBlend.gain(2,0);
 PUBlend.gain(3,0);
-// Bass Tone Filter Control
-BassTone.frequency(bF);
-BassTone.resonance(bQ);
+// Filters
 
-LoPass.setLowpass(0,5000,bQ);
 
-// Bass Tone Mix
 
-BassToneMix.gain(0,constrain(0.5-bbpg,0,0.5));
 
-BassToneMix.gain(1,constrain(bbpg,0,1));
 
-BassToneMix.gain(2,constrain(-bbpg,0,0.5));
 
-BassToneMix.gain(3,constrain(bbpg,0,1));
-// Mid Tone Mix
-midToneMix.gain(0,0);
-midToneMix.gain(1,0);
-midToneMix.gain(2,0);
-midToneMix.gain(3,0);
-// Tone Mix
-ToneMix.gain(0,0.25);
-ToneMix.gain(1,0.25);
-ToneMix.gain(2,0.25);
-ToneMix.gain(3,0.25);
-
-debug(bQ);
+debug(hmQ);
 } 
 void readEncs() {
     // set encoders
@@ -388,7 +428,7 @@ value3=nvalue3;
 }
 
 void debug(float v1){
-Serial.print("Q: ");
+Serial.print("Bridge Pick Up: ");
 Serial.print(v1);
 Serial.print("\t");
 Serial.print("Module: ");
