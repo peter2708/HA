@@ -63,19 +63,22 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 // GUItool: begin automatically generated code
 AudioInputI2S            ip; //xy=83.00000381469727,214.40002632141113
 AudioMixer4              PUBlend; //xy=224.00007247924805,227.40009689331055
+AudioAnalyzeFFT256       attackRead;       //xy=344.00011444091797,476.00008964538574
 AudioFilterStateVariable LowMidTone; //xy=376.00011444091797,314.40013885498047
 AudioFilterBiquad        LoPass; //xy=394.0000343322754,366.40002822875977
 AudioFilterStateVariable BassTone; //xy=401.0001335144043,416.4002285003662
 AudioFilterStateVariable HighMidTone; //xy=418.00014877319336,260.40014839172363
-AudioAnalyzeRMS          cleanLevel;           //xy=437.99998474121094,518.9999923706055
 AudioMixer4              tMix2; //xy=594.0002899169922,340.40028381347656
 AudioMixer4              tMix1; //xy=595.0002899169922,272.4002799987793
 AudioMixer4              tMix3;         //xy=595.0002975463867,409.40010261535645
+AudioSynthWaveformDc     dc1;            //xy=636.9999847412109,488.99999237060547
+AudioAnalyzeRMS          afterDC;           //xy=680.9999847412109,562.9999923706055
+AudioEffectEnvelope      envelope;      //xy=766.0001029968262,488.000057220459
 AudioMixer4              tMix4; //xy=770.0000381469727,330.4000053405762
-AudioAnalyzeRMS          HighMidToneLevel; //xy=785,240
-AudioAnalyzeRMS          lowMidToneLevel; //xy=839.0000381469727,402.0000219345093
-AudioAmplifier           amp1;           //xy=896.0001754760742,329.3999900817871
-AudioOutputI2S           op; //xy=1017.0001792907715,336.40003871917725
+AudioAnalyzeRMS          afterEnv; //xy=844,562
+AudioFilterStateVariable wah;        //xy=902.0001068115234,361.0000858306885
+AudioMixer4              tMix5;         //xy=1027.0000495910645,352.00001525878906
+AudioOutputI2S           op; //xy=1159.0004501342773,358.40011501312256
 AudioConnection          patchCord1(ip, 0, PUBlend, 0);
 AudioConnection          patchCord2(ip, 1, PUBlend, 1);
 AudioConnection          patchCord3(PUBlend, 0, BassTone, 0);
@@ -83,7 +86,7 @@ AudioConnection          patchCord4(PUBlend, LoPass);
 AudioConnection          patchCord5(PUBlend, 0, HighMidTone, 0);
 AudioConnection          patchCord6(PUBlend, 0, LowMidTone, 0);
 AudioConnection          patchCord7(PUBlend, 0, tMix4, 0);
-AudioConnection          patchCord8(PUBlend, cleanLevel);
+AudioConnection          patchCord8(PUBlend, attackRead);
 AudioConnection          patchCord9(LowMidTone, 0, tMix2, 1);
 AudioConnection          patchCord10(LowMidTone, 1, tMix2, 0);
 AudioConnection          patchCord11(LowMidTone, 2, tMix2, 2);
@@ -95,12 +98,16 @@ AudioConnection          patchCord16(HighMidTone, 0, tMix1, 1);
 AudioConnection          patchCord17(HighMidTone, 1, tMix1, 0);
 AudioConnection          patchCord18(HighMidTone, 2, tMix1, 2);
 AudioConnection          patchCord19(tMix2, 0, tMix4, 2);
-AudioConnection          patchCord20(tMix2, lowMidToneLevel);
-AudioConnection          patchCord21(tMix1, 0, tMix4, 1);
-AudioConnection          patchCord22(tMix1, HighMidToneLevel);
-AudioConnection          patchCord23(tMix3, 0, tMix4, 3);
-AudioConnection          patchCord24(tMix4, amp1);
-AudioConnection          patchCord25(amp1, 0, op, 0);
+AudioConnection          patchCord20(tMix1, 0, tMix4, 1);
+AudioConnection          patchCord21(tMix3, 0, tMix4, 3);
+AudioConnection          patchCord22(dc1, envelope);
+AudioConnection          patchCord23(dc1, afterDC);
+AudioConnection          patchCord24(envelope, 0, wah, 1);
+AudioConnection          patchCord25(envelope, afterEnv);
+AudioConnection          patchCord26(tMix4, 0, tMix5, 0);
+AudioConnection          patchCord27(tMix4, 0, wah, 0);
+AudioConnection          patchCord28(wah, 1, tMix5, 1);
+AudioConnection          patchCord29(tMix5, 0, op, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=95.99998474121094,277.39998626708984
 // GUItool: end automatically generated code
 
@@ -305,8 +312,8 @@ float cg = pow(0.1,(bg+bc+hmc+lmc)*2+hmg+lmg);    //Inspect
 // Tone Mixers
 tMix4.gain(0,cg);
 tMix4.gain(1,1);
-tMix4.gain(2,1);
-tMix4.gain(3,1);
+tMix4.gain(2,2);
+tMix4.gain(3,2);
 //
 tMix3.gain(0,bg);
 tMix3.gain(1,bg);
@@ -318,7 +325,7 @@ tMix2.gain(1,lmc);
 tMix2.gain(2,lmc);
 tMix2.gain(3,0);
 //
-tMix1.gain(0,hmg);
+tMix1.gain(0,hmg*4);
 tMix1.gain(1,hmc);
 tMix1.gain(2,hmc);
 tMix1.gain(3,0);
@@ -434,31 +441,22 @@ value3=nvalue3;
 }
 
 void debug(float v1){
-//Serial.print("Bridge Pick Up: ");
-//Serial.print(v1);
-//Serial.print("\t");
-//Serial.print("Module: ");
-//Serial.print(modLabel);
-//Serial.print("\t");
-//Serial.print("Sub1: ");
-//Serial.print(subLabel);
-//Serial.print("\t");
-//Serial.print(par1[modSel][sub1]);
-//Serial.print("\t");
-//Serial.print("Sub2: ");
-//Serial.print(sub2Label);
-//Serial.print("\t");
-//Serial.print(par2[modSel][sub1][sub2]);
-//Serial.print("\t");
-Serial.print("Clean RMS:  ");
-Serial.println(cleanLevel.read());
+Serial.print("Bridge Pick Up: ");
+Serial.print(v1);
 Serial.print("\t");
-Serial.print("Low Mid Tone RMS:  ");
-Serial.println(lowMidToneLevel.read());
+Serial.print("Module: ");
+Serial.print(modLabel);
 Serial.print("\t");
-Serial.print("High Mid Tone Level:  ");
-Serial.println(HighMidToneLevel.read());
-
+Serial.print("Sub1: ");
+Serial.print(subLabel);
+Serial.print("\t");
+Serial.print(par1[modSel][sub1]);
+Serial.print("\t");
+Serial.print("Sub2: ");
+Serial.print(sub2Label);
+Serial.print("\t");
+Serial.println(par2[modSel][sub1][sub2]);
+//delay(50);
 }
 
 void welcome(){
