@@ -63,7 +63,8 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 // GUItool: begin automatically generated code
 AudioInputI2S            ip; //xy=83.00000381469727,214.40002632141113
 AudioMixer4              PUBlend; //xy=224.00007247924805,227.40009689331055
-AudioAnalyzeFFT256       attackRead;       //xy=344.00011444091797,476.00008964538574
+AudioFilterStateVariable pp;        //xy=240.99998474121094,514.9999923706055
+AudioAnalyzeFFT256       attackRead;       //xy=327.0001449584961,614.0001220703125
 AudioFilterStateVariable LowMidTone; //xy=376.00011444091797,314.40013885498047
 AudioFilterBiquad        LoPass; //xy=394.0000343322754,366.40002822875977
 AudioFilterStateVariable BassTone; //xy=401.0001335144043,416.4002285003662
@@ -81,33 +82,34 @@ AudioMixer4              tMix5;         //xy=1027.0000495910645,352.000015258789
 AudioOutputI2S           op; //xy=1159.0004501342773,358.40011501312256
 AudioConnection          patchCord1(ip, 0, PUBlend, 0);
 AudioConnection          patchCord2(ip, 1, PUBlend, 1);
-AudioConnection          patchCord3(PUBlend, 0, BassTone, 0);
-AudioConnection          patchCord4(PUBlend, LoPass);
-AudioConnection          patchCord5(PUBlend, 0, HighMidTone, 0);
-AudioConnection          patchCord6(PUBlend, 0, LowMidTone, 0);
-AudioConnection          patchCord7(PUBlend, 0, tMix4, 0);
-AudioConnection          patchCord8(PUBlend, attackRead);
-AudioConnection          patchCord9(LowMidTone, 0, tMix2, 1);
-AudioConnection          patchCord10(LowMidTone, 1, tMix2, 0);
-AudioConnection          patchCord11(LowMidTone, 2, tMix2, 2);
-AudioConnection          patchCord12(LoPass, 0, tMix3, 0);
-AudioConnection          patchCord13(BassTone, 0, tMix3, 2);
-AudioConnection          patchCord14(BassTone, 1, tMix3, 1);
-AudioConnection          patchCord15(BassTone, 2, tMix3, 3);
-AudioConnection          patchCord16(HighMidTone, 0, tMix1, 1);
-AudioConnection          patchCord17(HighMidTone, 1, tMix1, 0);
-AudioConnection          patchCord18(HighMidTone, 2, tMix1, 2);
-AudioConnection          patchCord19(tMix2, 0, tMix4, 2);
-AudioConnection          patchCord20(tMix1, 0, tMix4, 1);
-AudioConnection          patchCord21(tMix3, 0, tMix4, 3);
-AudioConnection          patchCord22(dc1, envelope);
-AudioConnection          patchCord23(dc1, afterDC);
-AudioConnection          patchCord24(envelope, 0, wah, 1);
-AudioConnection          patchCord25(envelope, afterEnv);
-AudioConnection          patchCord26(tMix4, 0, tMix5, 0);
-AudioConnection          patchCord27(tMix4, 0, wah, 0);
-AudioConnection          patchCord28(wah, 1, tMix5, 1);
-AudioConnection          patchCord29(tMix5, 0, op, 0);
+AudioConnection          patchCord3(ip, 1, pp, 0);
+AudioConnection          patchCord4(PUBlend, 0, BassTone, 0);
+AudioConnection          patchCord5(PUBlend, LoPass);
+AudioConnection          patchCord6(PUBlend, 0, HighMidTone, 0);
+AudioConnection          patchCord7(PUBlend, 0, LowMidTone, 0);
+AudioConnection          patchCord8(PUBlend, 0, tMix4, 0);
+AudioConnection          patchCord9(pp, 1, attackRead, 0);
+AudioConnection          patchCord10(LowMidTone, 0, tMix2, 1);
+AudioConnection          patchCord11(LowMidTone, 1, tMix2, 0);
+AudioConnection          patchCord12(LowMidTone, 2, tMix2, 2);
+AudioConnection          patchCord13(LoPass, 0, tMix3, 0);
+AudioConnection          patchCord14(BassTone, 0, tMix3, 2);
+AudioConnection          patchCord15(BassTone, 1, tMix3, 1);
+AudioConnection          patchCord16(BassTone, 2, tMix3, 3);
+AudioConnection          patchCord17(HighMidTone, 0, tMix1, 1);
+AudioConnection          patchCord18(HighMidTone, 1, tMix1, 0);
+AudioConnection          patchCord19(HighMidTone, 2, tMix1, 2);
+AudioConnection          patchCord20(tMix2, 0, tMix4, 2);
+AudioConnection          patchCord21(tMix1, 0, tMix4, 1);
+AudioConnection          patchCord22(tMix3, 0, tMix4, 3);
+AudioConnection          patchCord23(dc1, envelope);
+AudioConnection          patchCord24(dc1, afterDC);
+AudioConnection          patchCord25(envelope, 0, wah, 1);
+AudioConnection          patchCord26(envelope, afterEnv);
+AudioConnection          patchCord27(tMix4, 0, tMix5, 0);
+AudioConnection          patchCord28(tMix4, 0, wah, 0);
+AudioConnection          patchCord29(wah, 1, tMix5, 1);
+AudioConnection          patchCord30(tMix5, 0, op, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=95.99998474121094,277.39998626708984
 // GUItool: end automatically generated code
 
@@ -134,10 +136,14 @@ int fsr1; int fsr2; float fsr;
 movingAvg avgFSR(10);                  // define the moving average object
 movingAvg avg2FSR(25);                  // define the SECOND moving average object
 
+movingAvg avgPeak(2);                  // Smoothing filter for attack analysis
+
  
 int maxsub2[numOfMods][maxPar];
 int sub2LabelsIDX[numOfMods][10][10];
 void setup() {
+  // Initiate peak smoothing
+  avgPeak.begin();
    // Initiate FSR smoothing
    avgFSR.begin();
    avg2FSR.begin();
@@ -235,7 +241,8 @@ int oldModSel = 0;
 int oldSub1 = 0;
 int oldR1 = 0;
 // Assign Some constants
-
+// Some test variables
+float oldPeak = 0;
 
 
 void loop() {
@@ -441,21 +448,50 @@ value3=nvalue3;
 }
 
 void debug(float v1){
-Serial.print("Bridge Pick Up: ");
-Serial.print(v1);
-Serial.print("\t");
-Serial.print("Module: ");
-Serial.print(modLabel);
-Serial.print("\t");
-Serial.print("Sub1: ");
-Serial.print(subLabel);
-Serial.print("\t");
-Serial.print(par1[modSel][sub1]);
-Serial.print("\t");
-Serial.print("Sub2: ");
-Serial.print(sub2Label);
-Serial.print("\t");
-Serial.println(par2[modSel][sub1][sub2]);
+//Serial.print("Bridge Pick Up: ");
+//Serial.print(v1);
+//Serial.print("\t");
+//Serial.print("Module: ");
+//Serial.print(modLabel);
+//Serial.print("\t");
+//Serial.print("Sub1: ");
+//Serial.print(subLabel);
+//Serial.print("\t");
+//Serial.print(par1[modSel][sub1]);
+//Serial.print("\t");
+//Serial.print("Sub2: ");
+//Serial.print(sub2Label);
+//Serial.print("\t");
+//Serial.println(par2[modSel][sub1][sub2]);
+//Serial.println(attackRead.read(0)); //1
+//Serial.print("\t");
+//Serial.println(attackRead.read(1,2)); //2
+//Serial.print("\t");
+pp.frequency(100);
+pp.resonance(5);
+//int bin = map(neckEnc.read(),0,50,0,64);
+//int bin2 = (2*(bin+1))-1;
+//Serial.print(bin);
+//Serial.print("\t");
+//Serial.print(bin2);
+//Serial.print("\t");
+float peak = attackRead.read(2,5)*50;
+float slope = constrain(peak - oldPeak,0,1000);
+oldPeak = peak;
+
+if (slope>0.32){
+Serial.println(slope); //4  Debounce and check for +ve moving to -ve.  Also check other bins to avoid dissonance triggers
+}
+//delay(20);
+/*
+ * 0 to 1, resting: 0.02, Fret noise: 0.03, ringing: 3 , Finger: 1.48:6.82, Slap: 8: 9.53, Pop: 12.98:13.45 
+ * 1 to 3           0.01              0.03           1            1.28:3.71       3.8: 4.45      7.48:     
+  * 2 to 5           0.01               0.04           .3             0.681.20                      1.93
+ * 3 to 7           0.01               0.01            0.05             0.05 0.21     sub.21 to .31      0.43 to 0.73
+ * 
+ */ 
+
+
 //delay(50);
 }
 
