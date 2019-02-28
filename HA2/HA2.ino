@@ -272,7 +272,8 @@ sub2Label = sub2Labels[sub2LabelIDX];
 
 // call display
 //makeDisplay(modLabel);
-makeDisplay(modLabel);
+//makeDisplay(modLabel);
+makeD2(modLabel,subLabel,sub2Label,sub1,sub2);
 
 // Audio Algorithms
  // For neck control of PUG
@@ -557,7 +558,7 @@ void makeDisplay(String label1){
 if (nowT<10000){
   nowT = millis();
 }
-    
+    // main function, which will be a cut and paste from makeD2();
     if (nowT-startUpTime >10000){
     display.clearDisplay();
     display.setTextSize(2);
@@ -573,6 +574,10 @@ if (nowT<10000){
 //    display.print('|');
     
 }
+
+void makeD2(String lab1,String lab2,String lab3, int sub1,int sub2){
+  // make some displays
+  }
 
 
 
