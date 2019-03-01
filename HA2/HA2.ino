@@ -10,9 +10,9 @@ Encoder neckEnc(29, 28);  // Neck rotation
 Encoder midEnc(27, 26);  // Mid rotation
 Encoder brijEnc(25,24);      // Bridge Encoder
 
-#define CLICK_PIN3 33
-#define CLICK_PIN2 34
-#define CLICK_PIN1 35 // Neck clicker
+#define CLICK_PIN3 33 // mid encoder 34 is broken, use neck encoder for now
+#define CLICK_PIN2 35 // mid encoder 34 is broken, use neck encoder for now
+#define CLICK_PIN1 34 // Neck clicker Is actually 35, mid encoder is boroken
 
 #define numOfMods 3  // THE NUMBER OF MODULES
 #define maxPar 4 // MAX NUMBER OF PARAMETERS PER SUB MENU
@@ -62,52 +62,58 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 
 // GUItool: begin automatically generated code
 AudioInputI2S            ip; //xy=83.00000381469727,214.40002632141113
+AudioFilterBiquad        preproc;        //xy=122.9999885559082,420.00002098083496
 AudioMixer4              PUBlend; //xy=224.00007247924805,227.40009689331055
-AudioAnalyzeFFT256       attackRead;       //xy=327.0001449584961,614.0001220703125
+AudioAnalyzeNoteFrequency pitch;      //xy=254.00009155273438,722.2223672866821
+AudioAnalyzeRMS          env;           //xy=257.3333206176758,682.2222490310668
+AudioAnalyzeFFT256       attackRead;       //xy=291.33350372314453,608.5002937316895
 AudioFilterStateVariable LowMidTone; //xy=376.00011444091797,314.40013885498047
 AudioFilterBiquad        LoPass; //xy=394.0000343322754,366.40002822875977
 AudioFilterStateVariable BassTone; //xy=401.0001335144043,416.4002285003662
 AudioFilterStateVariable HighMidTone; //xy=418.00014877319336,260.40014839172363
+AudioSynthWaveformDc     dc1;            //xy=507.0000915527344,471.0000286102295
 AudioMixer4              tMix2; //xy=594.0002899169922,340.40028381347656
 AudioMixer4              tMix1; //xy=595.0002899169922,272.4002799987793
 AudioMixer4              tMix3;         //xy=595.0002975463867,409.40010261535645
-AudioSynthWaveformDc     dc1;            //xy=636.9999847412109,488.99999237060547
-AudioAnalyzeRMS          afterDC;           //xy=680.9999847412109,562.9999923706055
-AudioEffectEnvelope      envelope;      //xy=766.0001029968262,488.000057220459
+AudioEffectEnvelope      sweep;      //xy=631.000358581543,471.00022315979004
+AudioFilterStateVariable wah;        //xy=769.0005531311035,403.00034523010254
 AudioMixer4              tMix4; //xy=770.0000381469727,330.4000053405762
-AudioAnalyzeRMS          afterEnv; //xy=844,562
-AudioFilterStateVariable wah;        //xy=902.0001068115234,361.0000858306885
+AudioEffectWaveshaper    dist;     //xy=773.6666564941406,580.0000286102295
 AudioMixer4              tMix5;         //xy=1027.0000495910645,352.00001525878906
-AudioOutputI2S           op; //xy=1159.0004501342773,358.40011501312256
+AudioOutputI2S           op; //xy=1162.0008430480957,357.40014839172363
 AudioConnection          patchCord1(ip, 0, PUBlend, 0);
-AudioConnection          patchCord2(ip, 0, attackRead, 0);
+AudioConnection          patchCord2(ip, 0, preproc, 0);
 AudioConnection          patchCord3(ip, 1, PUBlend, 1);
-AudioConnection          patchCord4(PUBlend, 0, BassTone, 0);
-AudioConnection          patchCord5(PUBlend, LoPass);
-AudioConnection          patchCord6(PUBlend, 0, HighMidTone, 0);
-AudioConnection          patchCord7(PUBlend, 0, LowMidTone, 0);
-AudioConnection          patchCord8(PUBlend, 0, tMix4, 0);
-AudioConnection          patchCord9(LowMidTone, 0, tMix2, 1);
-AudioConnection          patchCord10(LowMidTone, 1, tMix2, 0);
-AudioConnection          patchCord11(LowMidTone, 2, tMix2, 2);
-AudioConnection          patchCord12(LoPass, 0, tMix3, 0);
-AudioConnection          patchCord13(BassTone, 0, tMix3, 2);
-AudioConnection          patchCord14(BassTone, 1, tMix3, 1);
-AudioConnection          patchCord15(BassTone, 2, tMix3, 3);
-AudioConnection          patchCord16(HighMidTone, 0, tMix1, 1);
-AudioConnection          patchCord17(HighMidTone, 1, tMix1, 0);
-AudioConnection          patchCord18(HighMidTone, 2, tMix1, 2);
-AudioConnection          patchCord19(tMix2, 0, tMix4, 2);
-AudioConnection          patchCord20(tMix1, 0, tMix4, 1);
-AudioConnection          patchCord21(tMix3, 0, tMix4, 3);
-AudioConnection          patchCord22(dc1, envelope);
-AudioConnection          patchCord23(dc1, afterDC);
-AudioConnection          patchCord24(envelope, 0, wah, 1);
-AudioConnection          patchCord25(envelope, afterEnv);
-AudioConnection          patchCord26(tMix4, 0, tMix5, 0);
-AudioConnection          patchCord27(tMix4, 0, wah, 0);
-AudioConnection          patchCord28(wah, 1, tMix5, 1);
-AudioConnection          patchCord29(tMix5, 0, op, 0);
+AudioConnection          patchCord4(preproc, env);
+AudioConnection          patchCord5(preproc, pitch);
+AudioConnection          patchCord6(preproc, attackRead);
+AudioConnection          patchCord7(PUBlend, 0, BassTone, 0);
+AudioConnection          patchCord8(PUBlend, LoPass);
+AudioConnection          patchCord9(PUBlend, 0, HighMidTone, 0);
+AudioConnection          patchCord10(PUBlend, 0, LowMidTone, 0);
+AudioConnection          patchCord11(PUBlend, 0, tMix4, 0);
+AudioConnection          patchCord12(LowMidTone, 0, tMix2, 1);
+AudioConnection          patchCord13(LowMidTone, 1, tMix2, 0);
+AudioConnection          patchCord14(LowMidTone, 2, tMix2, 2);
+AudioConnection          patchCord15(LoPass, 0, tMix3, 0);
+AudioConnection          patchCord16(BassTone, 0, tMix3, 2);
+AudioConnection          patchCord17(BassTone, 1, tMix3, 1);
+AudioConnection          patchCord18(BassTone, 2, tMix3, 3);
+AudioConnection          patchCord19(BassTone, 2, dist, 0);
+AudioConnection          patchCord20(HighMidTone, 0, tMix1, 1);
+AudioConnection          patchCord21(HighMidTone, 1, tMix1, 0);
+AudioConnection          patchCord22(HighMidTone, 2, tMix1, 2);
+AudioConnection          patchCord23(dc1, sweep);
+AudioConnection          patchCord24(tMix2, 0, tMix4, 2);
+AudioConnection          patchCord25(tMix1, 0, tMix4, 1);
+AudioConnection          patchCord26(tMix3, 0, tMix4, 3);
+AudioConnection          patchCord27(sweep, 0, wah, 1);
+AudioConnection          patchCord28(wah, 0, tMix5, 2);
+AudioConnection          patchCord29(wah, 1, tMix5, 1);
+AudioConnection          patchCord30(tMix4, 0, tMix5, 0);
+AudioConnection          patchCord31(tMix4, 0, wah, 0);
+AudioConnection          patchCord32(dist, 0, tMix5, 3);
+AudioConnection          patchCord33(tMix5, 0, op, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=95.99998474121094,277.39998626708984
 // GUItool: end automatically generated code
 
@@ -142,6 +148,8 @@ int sub2LabelsIDX[numOfMods][10][10];
 unsigned long nowT;
 
 void setup() {
+
+  pitch.begin(.99999);
   startUpTime = millis();
   // Initiate peak smoothing
   avgPeak.begin();
@@ -188,19 +196,22 @@ void setup() {
   debouncer3.attach(CLICK_PIN3);
   debouncer3.interval(5); // interval in ms
   welcome();
-
+// Set maximum number of Brij (sub2) settings
 for (int i = 0;i<numOfMods;i++){
   for (int j = 0;j<maxPar;j++){
   maxsub2[i][j]=2;
 }}
-  
+
 maxsub2[0][0]=1;
+maxsub2[1][0]=1;
+
 
 for (int i = 0;i<numOfMods;i++){
   for (int j = 0;j<maxPar;j++){
     for (int k = 0;k<maxPar;k++){
 sub2LabelsIDX[i][j][k]=9;
   }}}
+  // In Tone Module (modSel 0)
 sub2LabelsIDX[0][0][0]=0;
 sub2LabelsIDX[0][1][0]=1;
 sub2LabelsIDX[0][2][0]=1;
@@ -208,6 +219,10 @@ sub2LabelsIDX[0][3][0]=1;
 sub2LabelsIDX[0][1][1]=2;
 sub2LabelsIDX[0][2][1]=2;
 sub2LabelsIDX[0][3][1]=2;
+// In Wah Module (modSel 1);
+sub2LabelsIDX[1][0][0]=3;
+sub2LabelsIDX[1][1][0]=2;
+sub2LabelsIDX[1][1][1]=4;
 }
 
 // Some constraints
@@ -235,20 +250,32 @@ int sub2LabIx[numOfMods][maxPar][maxPar];
 // Some Labels
 String modLabels[numOfMods]={"TONE","WAH","RING MOD"};
 String subLabels[numOfMods][maxPar] = {"PAN","BASS GAIN","LOW MID G","HIGH MID G",
-"DECAY","SENSITIVITY","ANIMAL","DIRECTION"};
-String sub2Labels[10] = {"NECK","FREQUENCY","RESONANCE","","","","","","","nine"};
+"WET/DRY","FREQUENCY","RANGE"};
+String sub2Labels[10] = {"NECK","FREQUENCY","RESONANCE","LOW PASS","DEPTH","","","","","Not In Use"};
 // Some intialisers
 int oldModSel = 0;
 int oldSub1 = 0;
 int oldR1 = 0;
+unsigned long timer = 0;
+unsigned long oldTimer = 0;
+int MaxPar = maxPar;
 // Assign Some constants
+
 // Some test variables
 float oldPeak = 0;
 
 
 void loop() {
- readEncs();
 
+
+
+  
+ readEncs();
+ // Restrict Sub Menu
+if (modSel == 1){
+  MaxPar = maxPar-2;
+}
+else MaxPar=maxPar;
 
 // Read buttons
 
@@ -261,21 +288,29 @@ readClicks();
   int avg = avgFSR.reading(fsr);
   int avg2 = avg2FSR.reading(avg);
   
+ 
 // Assign parameter values
 modSel = constrain(readings[0]/modReg,0,numOfMods-1);
 modLabel = modLabels[modSel];
 sub1 = readings[4];
 sub2 = readings[5];
+
 subLabel = subLabels[modSel][sub1];
 int sub2LabelIDX = sub2LabelsIDX[modSel][sub1][sub2];
 sub2Label = sub2Labels[sub2LabelIDX];
 
+
+
 // call display
 //makeDisplay(modLabel);
 //makeDisplay(modLabel);
-makeD2(modLabel,subLabel,sub2Label,sub1,sub2);
+makeD2(modLabel,subLabel,sub2Label,modSel,sub1,sub2);
 
-// Audio Algorithms
+
+// Preprocessing
+preproc.setBandpass(0,200,0.7);
+preproc.setBandpass(1,200,0.7);
+// ########################## TONE ###################################
  // For neck control of PUG
 if ((par2[0][0][0]>10)||(par2[0][0][0]<-10)){  
   pugFsrC=par2[0][0][0]*0.04;     // if neck control is on, use this, otherwise, 1  
@@ -286,8 +321,7 @@ float bAvgPug=constrain((fsr-120)*pugFsrC,-50,50);
 float bpug=constrain((50+(par1[0][0])+bAvgPug)*0.01,0,1);//*bAvgPug;    // Bridge pick up gain
 float npug=1-bpug;   // Neck pick up gain
 
-
-// For Bass Tone
+// VARIABLES TONE
 float bg = constrain(map(float(par1[0][1]),0,50,0,0.5),0,0.5);
 float bc = -constrain(map(float(par1[0][1]),0,50,0,0.5),-0.5,0);
 
@@ -300,15 +334,17 @@ float lmg = constrain(map(float(par1[0][2]),0,50,0,1),0,1);
 float lmc = -constrain(map(float(par1[0][2]),0,50,0,0.5),-0.5,0);
 
 float lmF = map(float(par2[0][2][0]),-50,50,150,2000);
-float lmQ = map(float(par2[0][2][1]),-50,50,.707,5);
+float lmQ = map(float(par2[0][2][1]),-50,50,.707,3);
 // For High mid Tone
 float hmg = constrain(map(float(par1[0][3]),0,50,0,1),0,1);
 float hmc = -constrain(map(float(par1[0][3]),0,50,0,0.5),-0.5,0);
 
 float hmF = map(float(par2[0][3][0]),-50,50,1500,5000);
-float hmQ = map(float(par2[0][3][1]),-50,50,.707,5);
+float hmQ = map(float(par2[0][3][1]),-50,50,.707,3);
 
-// Filters --- Tone
+float cg = pow(0.1,(bg+bc+hmc+lmc)*2+hmg+lmg);    //Inspect
+
+// FILTERS --- TONE
 LoPass.setLowpass(0,lpF,lpQ);
 
 BassTone.frequency(bF);
@@ -321,8 +357,8 @@ HighMidTone.frequency(hmF);
 HighMidTone.resonance(hmQ);
 // Clean/Tone Balance
 
-float cg = pow(0.1,(bg+bc+hmc+lmc)*2+hmg+lmg);    //Inspect
-// Tone Mixers
+
+// MIXERS TONE
 tMix4.gain(0,cg);
 tMix4.gain(1,1);
 tMix4.gain(2,2);
@@ -343,24 +379,53 @@ tMix1.gain(1,hmc);
 tMix1.gain(2,hmc);
 tMix1.gain(3,0);
 
-// Audio processing
-/*
- * Tone Section
- */
 // Pick Up Balance
 
 PUBlend.gain(0,npug);                                   // Neck pick up gain
 PUBlend.gain(1,bpug);                                   // Bridge pick up gain
 PUBlend.gain(2,0);
 PUBlend.gain(3,0);
-// Filters
 
+// ################## WAH ###############
 
+// VARIABLES
+float peak = attackRead.read(2,3)*50;
+float slope = constrain(peak - oldPeak,0,1);
+oldPeak = peak;
+float ww = abs(map(float(par1[1][0]),-50,50,-1,1));
+float wlp = abs(map(float(par2[1][0][0]),-50,50,-1,1));
+float wf = map(float(par1[1][1]),-50,50,100,600);
+float wr = map(float(par2[1][1][0]),-50,50,2,5);
+float wspeed = abs(map(peak,0,4,600,200));
+float wdepth = map(float(par2[1][1][1]),-50,50,0.5,7);
+// AUTO FILTER WAH
+dc1.amplitude(1);
+sweep.delay(0);
+   sweep.delay(5); 
+   sweep.attack(wspeed);
+   sweep.hold(100);
+   sweep.decay(2*wspeed);
+   sweep.sustain(0);
+   //sweep.release(1000);    
+if (slope>0.35){
+   sweep.noteOn();
+  // timer = millis();
+ 
+   //sweep.noteOff();
+   //4  Debounce and check for +ve moving to -ve.  Also check other bins to avoid dissonance triggers
+}
+// PROCESSING WAH
 
+wah.frequency(wf);
+wah.resonance(wr);
+wah.octaveControl(wdepth);
 
-
-
-debug(lmg);
+tMix5.gain(0,1-(0.7+wlp)*ww);
+tMix5.gain(1,ww);
+//tMix5.gain(2,2*ww*wlp);
+// stuff under construction
+//dist.shape(COMP,1025);
+tMix5.gain(3,.5);
 } 
 void readEncs() {
     // set encoders
@@ -430,7 +495,8 @@ debouncer2.update();
 int nvalue2 = debouncer2.read();
 if (nvalue2!=value2){
 if (value2 == HIGH){
-  if(readings[4]>maxPar-2){
+
+  if(readings[4]>MaxPar-2){
     readings[4]=-1;
   }
    readings[4]++;
@@ -453,91 +519,41 @@ value3=nvalue3;
 
 }
 
-void debug(float v1){
-//Serial.print("Bridge Pick Up: ");
-//Serial.print(v1);
-//Serial.print("\t");
-//Serial.print("Module: ");
-//Serial.print(modLabel);
-//Serial.print("\t");
-//Serial.print("Sub1: ");
-//Serial.print(subLabel);
-//Serial.print("\t");
-//Serial.print(par1[modSel][sub1]);
-//Serial.print("\t");
-//Serial.print("Sub2: ");
-//Serial.print(sub2Label);
-//Serial.print("\t");
-//Serial.println(par2[modSel][sub1][sub2]);
-//Serial.println(attackRead.read(0)); //1
-//Serial.print("\t");
-//Serial.println(attackRead.read(1,2)); //2
-//Serial.print("\t");
-//pp.frequency(5000);
-//pp.resonance(1);
-//int bin = map(neckEnc.read(),0,50,0,64);
-//int bin2 = (2*(bin+1))-1;
-//Serial.print(bin);
-//Serial.print("\t");
-//Serial.print(bin2);
-//Serial.print("\t");
-float peak = attackRead.read(2,3)*50;
-float slope = constrain(peak - oldPeak,0,1);
-oldPeak = peak;
-//Serial.print(.35);
-//Serial.print(" ");
-//Serial.println(slope);
 
-
-//if (slope>0.35){
-//Serial.println(peak); //4  Debounce and check for +ve moving to -ve.  Also check other bins to avoid dissonance triggers
-//}
-//delay(50);
-/*
- * 0 to 1, resting: 0.02, Fret noise: 0.03, ringing: 3 , Finger: 1.48:6.82, Slap: 8: 9.53, Pop: 12.98:13.45 
- * 1 to 3           0.01              0.03           1            1.28:3.71       3.8: 4.45      7.48:     
-  * 2 to 5           0.01               0.04           .3             0.681.20                      1.93
- * 3 to 7           0.01               0.01            0.05             0.05 0.21     sub.21 to .31      0.43 to 0.73
- * 
- */ 
-
-
-//delay(50);
-}
 
 void welcome(){
 
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(10,0);
-  display.clearDisplay();
-  display.println("HA-BASS");
-  display.display();
-  delay(1);
-  display.startscrollright(0x00, 0x0F);
-  delay(2000);
-  display.stopscroll();
-  delay(1000);
-  display.startscrollleft(0x00, 0x0F);
-  delay(2000);
-  display.stopscroll();
-  delay(1000);    
-
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(10,0);
-  display.clearDisplay();
-  display.println("lOADING");
-  display.display();
-  delay(1);
-  display.startscrollright(0x00, 0x0F);
-  delay(2000);
-  display.stopscroll();
-  delay(1000);
-  display.startscrollleft(0x00, 0x0F);
-  delay(2000);
-  display.stopscroll();
-  delay(1000);   
+//  display.setTextSize(2);
+//  display.setTextColor(WHITE);
+//  display.setCursor(10,0);
+//  display.clearDisplay();
+//  display.println("HA-BASS");
+//  display.display();
+//  delay(1);
+//  display.startscrollright(0x00, 0x0F);
+//  delay(2000);
+//  display.stopscroll();
+//  delay(1000);
+//  display.startscrollleft(0x00, 0x0F);
+//  delay(2000);
+//  display.stopscroll();
+//  delay(1000);    
+//
+//  display.setTextSize(2);
+//  display.setTextColor(WHITE);
+//  display.setCursor(10,0);
+//  display.clearDisplay();
+//  display.println("lOADING");
+//  display.display();
+//  delay(1);
+//  display.startscrollright(0x00, 0x0F);
+//  delay(2000);
+//  display.stopscroll();
+//  delay(1000);
+//  display.startscrollleft(0x00, 0x0F);
+//  delay(2000);
+//  display.stopscroll();
+//  delay(1000);   
   }
 
 void makeDisplay1(String label1){
@@ -575,8 +591,22 @@ if (nowT<10000){
     
 }
 
-void makeD2(String lab1,String lab2,String lab3, int sub1,int sub2){
+void makeD2(String lab1,String lab2,String lab3, int mod, int sub1,int sub2){
+  
   // make some displays
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0); 
+    String line2 = "";
+    line2 = lab2 + "\t" + par1[mod][sub1];
+    display.println(lab1);
+    display.setTextSize(1);
+    display.println(line2);
+    String line3 = "";
+    line3 = lab3 + "\t" + par2[mod][sub1][sub2] + "\t";
+    display.println(line3);
+    display.display();
   }
 
 

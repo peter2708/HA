@@ -1,13 +1,16 @@
 /* 
- *  In Master 2...............
- *  Essentially a working prototype
- * Bass and mid controls, pan, wah, ring modulation and a poorly working synth
+ *  In Master HA 2...............
+ *  Essentially a paired back, working prototype
+ *  
+ *  Bass, low and high mid controls, pan, and an envelope filter with no neck implementation
+ *  Wah - wet dry, low pass, frequency controls available but not fine tuned, or neck  *  implemented
  *  #################### Road Test  ############################
- *  Wah sounds a bit tinny, find a sweeter center frequency, or change filter type   -   update . Much improved
- * Output distorts when I play hard -- first check that this is not the input, then adjust all mixer levels  - update : seems to be fixed, still to be checked on a good amp
- * Tone control needs adjusting, only route here is just to play loud
+ *  
  * 
  *  ############### TO DO ############################
+ *  Priority - Waveshaping, a function has to be implemented that generates the shape array, is only called when parameters are changed, and has gain optionally controlled by the neck
+ *
+ *
  *  1. Refine Synth Effect
  *  2. Add Distortion, Chorus and Granular Synth
  *  3. Add Hi pass to bass tone control (it can boost top end until the last 20 to 30 encoder values)
@@ -32,3 +35,7 @@
 *   
 
  */
+
+String subLabels[numOfMods][maxPar] = {"PAN","BASS GAIN","LOW MID G","HIGH MID G",
+"WET/DRY","SPEED","ANIMAL","DIRECTION"};
+String sub2Labels[10] = {"NECK","FREQUENCY","RESONANCE","","","","","","","nine"};
