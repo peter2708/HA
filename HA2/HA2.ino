@@ -31,6 +31,7 @@ Adafruit_SSD1306 display(OLED_RESET);
 #define XPOS 0
 #define YPOS 1
 #define DELTAY 2
+#define l 17
 
 
 #define LOGO16_GLCD_HEIGHT 16 
@@ -149,6 +150,7 @@ unsigned long nowT;
 
 void setup() {
 
+
   pitch.begin(.99999);
   startUpTime = millis();
   // Initiate peak smoothing
@@ -248,10 +250,10 @@ String subLabel;
 String sub2Label;
 int sub2LabIx[numOfMods][maxPar][maxPar];
 // Some Labels
-String modLabels[numOfMods]={"TONE","WAH","RING MOD"};
+String modLabels[numOfMods]={"TONE","WAH","DISTORTION"};
 String subLabels[numOfMods][maxPar] = {"PAN","BASS GAIN","LOW MID G","HIGH MID G",
-"WET/DRY","FREQUENCY","RANGE"};
-String sub2Labels[10] = {"NECK","FREQUENCY","RESONANCE","LOW PASS","DEPTH","","","","","Not In Use"};
+"WET/DRY","FREQUENCY","COMPRESSION","HARMONIC DISTORTION","COSINE"};
+String sub2Labels[10] = {"NECK","FREQUENCY","RESONANCE","LOW PASS","DEPTH","GAIN","THRESHOLD","RATIO","","Not In Use"};
 // Some intialisers
 int oldModSel = 0;
 int oldSub1 = 0;
@@ -264,16 +266,37 @@ int MaxPar = maxPar;
 // Some test variables
 float oldPeak = 0;
 
+// for wave changing
+  float wave[l];
+  float thresh = 0.5;
+  float ratio = 0.7;
+
 
 void loop() {
 
-
-
-  
+// for wave shaping - turn this into a function that 
+// is only called when thresh or ratio are changed
+for (int i=0;i<l;i++){
+    wave[i]=2*i/float(l-1)-1;
+    if (abs(wave[i])>thresh){
+      wave[i]=wave[i]/abs(wave[i])*thresh+
+      (wave[i]-thresh*wave[i]/abs(wave[i]))*ratio;
+    }
+ }
+ 
+for(int i = 0; i < l; i++)
+{
+  Serial.print(wave[i]);
+  Serial.print("\t");
+}
+Serial.println("");  
  readEncs();
- // Restrict Sub Menu
+//  Restrict Sub Menu
 if (modSel == 1){
-  MaxPar = maxPar-2;
+  MaxPar = maxPar-3;
+}
+if (modSel==2){
+  MaxPar = maxPar-1;
 }
 else MaxPar=maxPar;
 
@@ -422,10 +445,10 @@ wah.octaveControl(wdepth);
 
 tMix5.gain(0,1-(0.7+wlp)*ww);
 tMix5.gain(1,ww);
-//tMix5.gain(2,2*ww*wlp);
+tMix5.gain(2,2*ww*wlp);
 // stuff under construction
 //dist.shape(COMP,1025);
-tMix5.gain(3,.5);
+//tMix5.gain(3,.5);
 } 
 void readEncs() {
     // set encoders
