@@ -22,8 +22,7 @@
  * 
  * ##############    TODO   ##########
  * TONE, REFINE
- * ENVELOPE FILTER - USE NECK TO SWEEP BETWEEN HIGH, BAND AND LOW PASS
- * DISTORTION - HOW TO CONTROL AND ROUTE - EITHER STRAIGHT ON OR SAME AS FOR ENVELOPE FILTER
+ * ENVELOPE FILTER - USE NECK TO SWEEP BETWEEN HIGH, BAND AND LOW PASS - see distortion implementation
  * RING MODULATION
  * */
 
@@ -104,11 +103,13 @@ AudioFilterStateVariable bass;           //xy=519.0000305175781,152.000007629394
 AudioFilterStateVariable mid;            //xy=519.0000305175781,202.00000953674316
 AudioFilterStateVariable wah;            //xy=588.0003623962402,258.00012397766113
 AudioMixer4              tonemix;        //xy=653.0000381469727,143.00000762939453
-AudioEffectWaveshaper    dist1;     //xy=793.0001602172852,369.0000867843628
-AudioEffectWaveshaper    dist3; //xy=795.0000896453857,434.0000581741333
+AudioEffectWaveshaper    dist1;     //xy=686.9999847412109,360.99999237060547
+AudioEffectWaveshaper    dist3; //xy=691,418
+AudioSynthWaveformDc     dc2;            //xy=743.0000381469727,513.0000247955322
+AudioEffectWaveshaper    dist2; //xy=816.0000381469727,364.000018119812
+AudioEffectWaveshaper    dist4; //xy=828,410
 AudioMixer4              fx1;         //xy=869.000171661377,231.00003051757812
-AudioEffectWaveshaper    dist2;  //xy=913.0000953674316,369.00005435943604
-AudioEffectWaveshaper    dist4; //xy=914.0000305175781,433.0000247955322
+AudioEffectMultiply      neckdistlevel;      //xy=935.9999847412109,491.99999237060547
 AudioMixer4              fx2; //xy=1102.0000534057617,409.000036239624
 AudioOutputI2S           op;             //xy=1103.0001754760742,232.00000715255737
 AudioConnection          patchCord1(preF, attackRead);
@@ -128,12 +129,14 @@ AudioConnection          patchCord14(tonemix, 0, fx1, 0);
 AudioConnection          patchCord15(tonemix, 0, wah, 0);
 AudioConnection          patchCord16(dist1, dist2);
 AudioConnection          patchCord17(dist3, dist4);
-AudioConnection          patchCord18(fx1, dist1);
-AudioConnection          patchCord19(fx1, 0, fx2, 0);
+AudioConnection          patchCord18(dc2, 0, neckdistlevel, 1);
+AudioConnection          patchCord19(dist2, 0, fx2, 1);
 AudioConnection          patchCord20(dist2, dist3);
-AudioConnection          patchCord21(dist2, 0, fx2, 1);
-AudioConnection          patchCord22(dist4, 0, fx2, 2);
-AudioConnection          patchCord23(fx2, 0, op, 0);
+AudioConnection          patchCord21(dist4, 0, neckdistlevel, 0);
+AudioConnection          patchCord22(fx1, 0, fx2, 0);
+AudioConnection          patchCord23(fx1, dist1);
+AudioConnection          patchCord24(neckdistlevel, 0, fx2, 2);
+AudioConnection          patchCord25(fx2, 0, op, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=154,49
 // GUItool: end automatically generated code
 
@@ -297,30 +300,33 @@ float peak = attackRead.read(2,3)*50;
 float slope = constrain(peak - oldPeak,0,1);
 oldPeak = peak;
 //  ############ TONE  ##############
-
 pickupblend();
 tonefilters();
-
 // ######### WAH  #########
 envFilter(peak,slope,avg2);
-// ######## DISTORTION ####### 
-float dist1vol = constrain(map(float(par1[3][0]),minEnc,maxEnc,0,1),0,1);
-float dist2vol = constrain(map(float(par2[3][0]),minEnc,maxEnc,0,1),0,1);
-String line1 = "";
-line1 = line1 + "first harmonic \t" + dist1vol + "\t second harmonic \t" + dist2vol;
-Serial.println(line1);
-fx2.gain(0,1-(dist1vol+dist2vol)*.5);
-fx2.gain(1,dist1vol);
-fx2.gain(2,dist2vol);
+
 // ############## effects mixer ##############
+// wah
 float wg = constrain(map(float(par2[2][0]),0,maxEnc,0,1),0,1);
 float wg2 = constrain(map(float(par2[2][0]),maxEnc*.5,maxEnc,0,1),0,1);
 //Serial.println(wg);
 fx1.gain(0,1-(wg+wg2)/2);
-
 fx1.gain(1,wg);
-
 fx1.gain(2,wg2);
+// distortion
+float dist1vol = constrain(map(float(par1[3][0]),minEnc,maxEnc,0,1),0,1);
+//float dist2vol = constrain(map(float(par2[3][0]),minEnc,maxEnc,0,1),0,1);
+
+float dist2vol = constrain(abs(avg2-120)/50,0,.9);
+dc2.amplitude(dist2vol,20);
+
+//String line1 = "";
+//line1 = line1 + "first harmonic \t" + dist1vol + "\t second harmonic \t"
+//+ dist2vol;// + "\t FSR \t" + neckDist;
+//Serial.println(line1);
+fx2.gain(0,1-(dist1vol+dist2vol)*.5);
+fx2.gain(1,dist1vol);
+fx2.gain(2,1);
 
 
 
@@ -383,21 +389,21 @@ void tonefilters(){
 /* Debug Tone
  *  
  */
-//String LINE1  = "bass pass ";
-//LINE1 = LINE1 + "G: " + bassPg + "\t F: "
-// + bassPf + "\t Q: " + bassPr + "\t";
-//String LINE2  = "mid pass ";
-//LINE2 = LINE2 + "G: " + midPg + "\t F: "
-// + midPf + "\t Q: " + midPr + "\t" + "bump: " + trebleBump; 
-//Serial.print(LINE1);
-//Serial.println(LINE2);
-//  tonemix.gain(0,1+bassPg+midPg);
-//  tonemix.gain(1,-bassPg);
-//  tonemix.gain(2,midPg);
-//  bass.frequency(bassPf);
-//  bass.resonance(bassPr);
-//  mid.frequency(midPf);
-//  mid.resonance(midPr);
+String LINE1  = "bass pass ";
+LINE1 = LINE1 + "G: " + bassPg + "\t F: "
+ + bassPf + "\t Q: " + bassPr + "\t";
+String LINE2  = "mid pass ";
+LINE2 = LINE2 + "G: " + midPg + "\t F: "
+ + midPf + "\t Q: " + midPr + "\t" + "bump: " + trebleBump; 
+Serial.print(LINE1);
+Serial.println(LINE2);
+  tonemix.gain(0,1+bassPg+midPg);
+  tonemix.gain(1,-bassPg);
+  tonemix.gain(2,midPg);
+  bass.frequency(bassPf);
+  bass.resonance(bassPr);
+  mid.frequency(midPf);
+  mid.resonance(midPr);
 
   
 }
