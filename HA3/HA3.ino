@@ -1,4 +1,5 @@
 /*
+ *  On git hub: https://github.com/peter2708/HA.git
  * HA3 IS A FUNDAMENTAL RE-WORKING
  * 
  * WE WILL NOW HAVE A SIMPLER MENU:
@@ -16,13 +17,13 @@
  * STATUS - PAN BALANCE WORKS
  * STATUS - TONE WORKS
  * STATUS - ENVELOPE FILTER WORKS
- * STATUS - CRUDELY IMPLETMENTED
+ * STATUS - DISTORTION IMPLETMENTED
  * 
  * 
  * ##############    TODO   ##########
  * TONE, REFINE
  * ENVELOPE FILTER - USE NECK TO SWEEP BETWEEN HIGH, BAND AND LOW PASS
- * DISTORTION - HOW TO CONTROL AND ROUTE?, WAVESSHAPE CANNOT BE CALLED LIVE
+ * DISTORTION - HOW TO CONTROL AND ROUTE - EITHER STRAIGHT ON OR SAME AS FOR ENVELOPE FILTER
  * RING MODULATION
  * */
 
@@ -102,14 +103,14 @@ AudioEffectEnvelope      sweep;          //xy=402.00003814697266,302.00005722045
 AudioFilterStateVariable bass;           //xy=519.0000305175781,152.00000762939453
 AudioFilterStateVariable mid;            //xy=519.0000305175781,202.00000953674316
 AudioFilterStateVariable wah;            //xy=588.0003623962402,258.00012397766113
-AudioEffectWaveshaper    dist1;     //xy=604.0001602172852,515.0000867843628
-AudioEffectWaveshaper    dist3; //xy=605,580
 AudioMixer4              tonemix;        //xy=653.0000381469727,143.00000762939453
-AudioEffectWaveshaper    dist2; //xy=729.0001640319824,515.0000343322754
-AudioEffectWaveshaper    dist4; //xy=730.0000038146973,579.9999475479126
+AudioEffectWaveshaper    dist1;     //xy=793.0001602172852,369.0000867843628
+AudioEffectWaveshaper    dist3; //xy=795.0000896453857,434.0000581741333
 AudioMixer4              fx1;         //xy=869.000171661377,231.00003051757812
+AudioEffectWaveshaper    dist2;  //xy=913.0000953674316,369.00005435943604
+AudioEffectWaveshaper    dist4; //xy=914.0000305175781,433.0000247955322
+AudioMixer4              fx2; //xy=1102.0000534057617,409.000036239624
 AudioOutputI2S           op;             //xy=1103.0001754760742,232.00000715255737
-AudioMixer4              fx2;         //xy=1111.0002403259277,614.0001239776611
 AudioConnection          patchCord1(preF, attackRead);
 AudioConnection          patchCord2(ip, 0, PUBlend, 0);
 AudioConnection          patchCord3(ip, 1, PUBlend, 1);
@@ -123,15 +124,15 @@ AudioConnection          patchCord10(bass, 1, tonemix, 1);
 AudioConnection          patchCord11(mid, 1, tonemix, 2);
 AudioConnection          patchCord12(wah, 1, fx1, 1);
 AudioConnection          patchCord13(wah, 2, fx1, 2);
-AudioConnection          patchCord14(dist1, dist2);
-AudioConnection          patchCord15(dist3, dist4);
-AudioConnection          patchCord16(tonemix, 0, fx1, 0);
-AudioConnection          patchCord17(tonemix, 0, wah, 0);
-AudioConnection          patchCord18(dist2, dist3);
-AudioConnection          patchCord19(dist2, 0, fx2, 1);
-AudioConnection          patchCord20(dist4, 0, fx2, 2);
-AudioConnection          patchCord21(fx1, dist1);
-AudioConnection          patchCord22(fx1, 0, fx2, 0);
+AudioConnection          patchCord14(tonemix, 0, fx1, 0);
+AudioConnection          patchCord15(tonemix, 0, wah, 0);
+AudioConnection          patchCord16(dist1, dist2);
+AudioConnection          patchCord17(dist3, dist4);
+AudioConnection          patchCord18(fx1, dist1);
+AudioConnection          patchCord19(fx1, 0, fx2, 0);
+AudioConnection          patchCord20(dist2, dist3);
+AudioConnection          patchCord21(dist2, 0, fx2, 1);
+AudioConnection          patchCord22(dist4, 0, fx2, 2);
 AudioConnection          patchCord23(fx2, 0, op, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=154,49
 // GUItool: end automatically generated code
@@ -166,6 +167,14 @@ unsigned long startUpTime;
 int maxsub2[numOfMods][maxPar];
 int sub2LabelsIDX[numOfMods][10][10];
 unsigned long nowT;
+
+// For Distortion
+
+float firstharmonic[3] = {1,0,1};
+float removedc[5] = {0, 0, -1, 0, 1};
+
+float comp[17];
+
 
 void setup() {
 
@@ -218,7 +227,14 @@ void setup() {
 
   // Add Welcome
   welcome();
-
+  
+ 
+  
+  // Set up distortion waves
+  dist1.shape(firstharmonic,3);
+  dist2.shape(removedc,5);
+  dist3.shape(firstharmonic,3);
+  dist4.shape(removedc,5);
 }
 
 // Some constraints
@@ -266,10 +282,9 @@ float midPg;
 float midPf;
 float midPr;
 float trebleBump;
-boolean waveset = 0;
-int wsl = 3;
-float firstharmonic[3];
-float removedc[5];
+
+float oldthresh;
+float oldratio;
 
 void loop() {
 // ############ read inputs ##########
@@ -289,35 +304,14 @@ tonefilters();
 // ######### WAH  #########
 envFilter(peak,slope,avg2);
 // ######## DISTORTION ####### 
-if (waveset == 0){
-
-for (int i=0;i<wsl;i++){
-  firstharmonic[i]=abs(2*float(i)/(wsl-1)-1);
-  Serial.print(firstharmonic[i]);
-  Serial.print("\t");
-  dist1.shape(firstharmonic,wsl);
-  dist3.shape(firstharmonic,wsl);
- // dist2.shape(firstharmonic,wsl);
-}
-Serial.println("");
-
-}
-if (waveset== 0){
-for (int i=0;i<5;i++){
-  removedc[i]=4*float(i)/(5-1)-3;
-  Serial.print(removedc[i]);
-  Serial.print("\t");
- // dist1.shape(firstharmonic,wsl);
-  dist2.shape(removedc,5);
-  dist4.shape(removedc,5);
-}
-Serial.println("");
-waveset = 1;
-}
-
-fx2.gain(0,0.5);
-fx2.gain(1,.5);
-fx2.gain(2,0.5);
+float dist1vol = constrain(map(float(par1[3][0]),minEnc,maxEnc,0,1),0,1);
+float dist2vol = constrain(map(float(par2[3][0]),minEnc,maxEnc,0,1),0,1);
+String line1 = "";
+line1 = line1 + "first harmonic \t" + dist1vol + "\t second harmonic \t" + dist2vol;
+Serial.println(line1);
+fx2.gain(0,1-(dist1vol+dist2vol)*.5);
+fx2.gain(1,dist1vol);
+fx2.gain(2,dist2vol);
 // ############## effects mixer ##############
 float wg = constrain(map(float(par2[2][0]),0,maxEnc,0,1),0,1);
 float wg2 = constrain(map(float(par2[2][0]),maxEnc*.5,maxEnc,0,1),0,1);
@@ -471,7 +465,7 @@ if ((prevMenu[0]==modSel)&&(prevMenu[1]==sub1)&&(prevMenu[2]==sub2)){
   // read encoders
 
   if (readings[0]!=neckEnc.read()){
-    Serial.println("call (N)");
+ //   Serial.println("call (N)");
     makeNeck();
   }
 //    if (readings[1]!=midEnc.read()){
@@ -479,7 +473,7 @@ if ((prevMenu[0]==modSel)&&(prevMenu[1]==sub1)&&(prevMenu[2]==sub2)){
 //    makeMid();
 //  }
       if (readings[2]!=brijEnc.read()){
-    Serial.println("call (B)");
+ //   Serial.println("call (B)");
     makeBrij();
   }
   // Neck
